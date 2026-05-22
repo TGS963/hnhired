@@ -5,6 +5,13 @@ import JobModal from '@/components/JobModal';
 
 type PageProps = { params: Promise<{ id: string }> };
 
+export const revalidate = 86400;
+export const dynamicParams = true;
+
+export async function generateStaticParams() {
+  return [];
+}
+
 export default async function InterceptedJobPage({ params }: PageProps) {
   const resolved = await params;
   const id = parseInt(resolved.id, 10);

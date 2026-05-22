@@ -14,9 +14,6 @@ export function ThemeToggle() {
 
   function toggle() {
     setTheme(next);
-    try {
-      document.cookie = `hnhired:theme=${next};path=/;max-age=31536000;samesite=lax`;
-    } catch {}
   }
 
   return (

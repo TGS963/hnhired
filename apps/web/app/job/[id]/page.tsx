@@ -6,6 +6,13 @@ import { SITE_URL, SITE_NAME } from '@/lib/site';
 
 type PageProps = { params: Promise<{ id: string }> };
 
+export const revalidate = 86400;
+export const dynamicParams = true;
+
+export async function generateStaticParams() {
+  return [];
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const resolved = await params;
   const id = parseInt(resolved.id, 10);

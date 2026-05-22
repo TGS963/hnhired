@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react';
 import type { Metadata } from 'next';
-import { cookies } from 'next/headers';
 import { IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
@@ -55,25 +54,22 @@ export const metadata: Metadata = {
   authors: [{ name: SITE_NAME }],
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
   modal,
 }: {
   children: ReactNode;
   modal: ReactNode;
 }) {
-  const cookieStore = await cookies();
-  const themeCookie = cookieStore.get('hnhired:theme')?.value;
-  const theme = themeCookie === 'dark' || themeCookie === 'light' ? themeCookie : 'light';
-
   return (
-    <html lang="en" data-theme={theme} className={plexMono.variable} suppressHydrationWarning>
+    <html lang="en" className={plexMono.variable} suppressHydrationWarning>
       <body>
         <ThemeProvider
           attribute="data-theme"
-          defaultTheme={theme}
+          defaultTheme="light"
           enableSystem={false}
           disableTransitionOnChange
+          storageKey="hnhired:theme"
         >
           <div className="hn-app-content">
             <div className="min-h-screen flex flex-col">
