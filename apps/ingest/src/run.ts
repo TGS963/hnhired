@@ -77,19 +77,11 @@ async function main() {
     );
 
     const pendingTotal = pending.rows.length;
-    console.log(`extraction phase: ${pendingTotal} comments to process`);
+    const EXTRACT_CONCURRENCY = Number(process.env.EXTRACT_CONCURRENCY ?? 8);
+    console.log(`extraction phase: ${pendingTotal} comments to process (concurrency=${EXTRACT_CONCURRENCY})`);
     const startTs = Date.now();
-    for (const row of pending.rows) {
-      extractions_attempted++;
-      if (extractions_attempted % 25 === 0 || extractions_attempted === pendingTotal) {
-        const elapsed = (Date.now() - startTs) / 1000;
-        const rate = extractions_attempted / Math.max(elapsed, 1);
-        const eta = Math.round((pendingTotal - extractions_attempted) / Math.max(rate, 0.01));
-        console.log(
-          `extract ${extractions_attempted}/${pendingTotal} ` +
-          `(ok=${extractions_new} fail=${extractions_failed} ${rate.toFixed(2)}/s eta=${eta}s)`,
-        );
-      }
+
+    async function processRow(row: { hn_item_id: string; text: string }) {
       const postId = row.hn_item_id;
       let ex: Extraction | null = null;
       let err: string | null = null;
@@ -111,7 +103,7 @@ async function main() {
            ON CONFLICT (post_raw_id, extractor_version) DO NOTHING`,
           [postId, EXTRACTOR_VERSION, err],
         );
-        continue;
+        return;
       }
 
       const canonical = canonicalize(ex.company);
@@ -160,6 +152,33 @@ async function main() {
         }
       }
     }
+
+    let cursor = 0;
+    async function worker() {
+      while (cursor < pending.rows.length) {
+        const idx = cursor++;
+        const row = pending.rows[idx]!;
+        extractions_attempted++;
+        try {
+          await processRow(row);
+        } catch (e) {
+          console.error(`row ${row.hn_item_id} crashed:`, e);
+        }
+        if (extractions_attempted % 25 === 0 || extractions_attempted === pendingTotal) {
+          const elapsed = (Date.now() - startTs) / 1000;
+          const rate = extractions_attempted / Math.max(elapsed, 1);
+          const eta = Math.round((pendingTotal - extractions_attempted) / Math.max(rate, 0.01));
+          console.log(
+            `extract ${extractions_attempted}/${pendingTotal} ` +
+            `(ok=${extractions_new} fail=${extractions_failed} ${rate.toFixed(2)}/s eta=${eta}s)`,
+          );
+        }
+      }
+    }
+
+    await Promise.all(
+      Array.from({ length: Math.max(1, EXTRACT_CONCURRENCY) }, () => worker()),
+    );
 
     for (const c of canonicals) {
       await client.query(

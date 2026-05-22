@@ -12,11 +12,12 @@ concurrency:
 jobs:
   ingest:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 120
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
       EXTRACTOR_VERSION: v1
+      EXTRACT_CONCURRENCY: '8'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
