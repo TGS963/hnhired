@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation';
 import { query } from '@/lib/db';
 import type { Post } from '@/lib/schemas';
 import DraftPanel from '@/components/DraftPanel';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -25,20 +27,6 @@ function formatSalary(post: Post): string | null {
   if (min != null && max != null) return `${fmt(Number(min))} – ${fmt(Number(max))}`;
   if (min != null) return `From ${fmt(Number(min))}`;
   return `Up to ${fmt(Number(max))}`;
-}
-
-function Badge({ children, tone = 'neutral' }: { children: React.ReactNode; tone?: 'neutral' | 'green' | 'red' | 'blue' }) {
-  const tones: Record<string, string> = {
-    neutral: 'bg-neutral-100 text-neutral-700 border-neutral-200',
-    green: 'bg-green-50 text-green-700 border-green-200',
-    red: 'bg-red-50 text-red-700 border-red-200',
-    blue: 'bg-blue-50 text-blue-700 border-blue-200',
-  };
-  return (
-    <span className={`inline-flex items-center rounded border px-2 py-0.5 text-xs font-medium ${tones[tone]}`}>
-      {children}
-    </span>
-  );
 }
 
 export default async function JobPage({ params }: PageProps) {
@@ -65,52 +53,47 @@ export default async function JobPage({ params }: PageProps) {
 
   return (
     <div className="space-y-8">
-      <Link href="/" className="inline-block text-sm text-neutral-600 hover:text-neutral-900">
+      <Link href="/" className="inline-block text-sm text-muted-foreground hover:text-foreground">
         ← Back to browse
       </Link>
 
       <header className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight text-neutral-900">
-          {p.company ?? 'Unknown company'}
-        </h1>
-        {roleTitle && <p className="text-lg text-neutral-600">{roleTitle}</p>}
+        <h1 className="text-3xl font-bold tracking-tight">{p.company ?? 'Unknown company'}</h1>
+        {roleTitle && <p className="text-lg text-muted-foreground">{roleTitle}</p>}
       </header>
 
-      <div className="flex flex-wrap items-center gap-2 text-sm text-neutral-700">
+      <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
         {posted && <span>{posted}</span>}
-        {posted && (locations || p.remote_policy || p.contract_type || salary) && <span className="text-neutral-300">·</span>}
+        {posted && (locations || p.remote_policy || p.contract_type || salary) && (
+          <span>·</span>
+        )}
         {locations && <span>{locations}</span>}
-        {p.remote_policy && <Badge tone="blue">{p.remote_policy}</Badge>}
-        {p.contract_type && <Badge>{p.contract_type}</Badge>}
-        {salary && <Badge tone="green">{salary}</Badge>}
+        {p.remote_policy && <Badge variant="outline">{p.remote_policy}</Badge>}
+        {p.contract_type && <Badge variant="secondary">{p.contract_type}</Badge>}
+        {salary && <Badge>{salary}</Badge>}
       </div>
 
       <div className="flex flex-wrap gap-3">
-        <a
-          href={`https://news.ycombinator.com/item?id=${p.post_raw_id}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center rounded border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-800 hover:bg-neutral-50"
-        >
-          View on Hacker News
-        </a>
-        {p.apply_url && (
+        <Button asChild variant="outline">
           <a
-            href={p.apply_url}
+            href={`https://news.ycombinator.com/item?id=${p.post_raw_id}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center rounded bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800"
           >
-            Apply
+            View on Hacker News
           </a>
+        </Button>
+        {p.apply_url && (
+          <Button asChild>
+            <a href={p.apply_url} target="_blank" rel="noopener noreferrer">
+              Apply
+            </a>
+          </Button>
         )}
         {p.apply_email && (
-          <a
-            href={`mailto:${p.apply_email}`}
-            className="inline-flex items-center rounded bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800"
-          >
-            Email {p.apply_email}
-          </a>
+          <Button asChild>
+            <a href={`mailto:${p.apply_email}`}>Email {p.apply_email}</a>
+          </Button>
         )}
       </div>
 
@@ -122,10 +105,14 @@ export default async function JobPage({ params }: PageProps) {
 
       {techStack.length > 0 && (
         <section className="space-y-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-neutral-500">Tech stack</h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            Tech stack
+          </h2>
           <div className="flex flex-wrap gap-2">
             {techStack.map((t) => (
-              <Badge key={t}>{t}</Badge>
+              <Badge key={t} variant="secondary">
+                {t}
+              </Badge>
             ))}
           </div>
         </section>
@@ -133,10 +120,14 @@ export default async function JobPage({ params }: PageProps) {
 
       {seniority.length > 0 && (
         <section className="space-y-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-neutral-500">Seniority</h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            Seniority
+          </h2>
           <div className="flex flex-wrap gap-2">
             {seniority.map((s) => (
-              <Badge key={s}>{s}</Badge>
+              <Badge key={s} variant="secondary">
+                {s}
+              </Badge>
             ))}
           </div>
         </section>
@@ -144,24 +135,28 @@ export default async function JobPage({ params }: PageProps) {
 
       {(p.visa_sponsorship === true || p.visa_sponsorship === false || p.equity === true || p.equity === false) && (
         <section className="flex flex-wrap gap-2">
-          {p.visa_sponsorship === true && <Badge tone="green">Visa sponsorship</Badge>}
-          {p.visa_sponsorship === false && <Badge tone="red">No visa sponsorship</Badge>}
-          {p.equity === true && <Badge tone="green">Equity offered</Badge>}
-          {p.equity === false && <Badge tone="red">No equity</Badge>}
+          {p.visa_sponsorship === true && <Badge>Visa sponsorship</Badge>}
+          {p.visa_sponsorship === false && <Badge variant="destructive">No visa sponsorship</Badge>}
+          {p.equity === true && <Badge>Equity offered</Badge>}
+          {p.equity === false && <Badge variant="destructive">No equity</Badge>}
         </section>
       )}
 
       {p.summary_1line && (
         <section className="space-y-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-neutral-500">Summary</h2>
-          <p className="text-base text-neutral-800">{p.summary_1line}</p>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            Summary
+          </h2>
+          <p>{p.summary_1line}</p>
         </section>
       )}
 
       {p.raw_text && (
         <section className="space-y-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-neutral-500">Original HN comment</h2>
-          <pre className="whitespace-pre-wrap font-sans text-sm text-neutral-700 border-l-2 border-neutral-200 pl-4">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            Original HN comment
+          </h2>
+          <pre className="whitespace-pre-wrap border-l-2 border-border pl-4 font-sans text-sm text-muted-foreground">
             {p.raw_text}
           </pre>
         </section>

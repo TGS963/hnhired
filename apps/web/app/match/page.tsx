@@ -4,6 +4,8 @@ import { useState } from 'react';
 import JobCard, { type JobCardRow } from '@/components/JobCard';
 import ResumeEditor from '@/components/ResumeEditor';
 import { useResume } from '@/lib/useResume';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 
 type MatchResult = JobCardRow & {
   fit_note: string;
@@ -67,43 +69,38 @@ export default function MatchPage() {
   if (!hydrated) return null;
 
   return (
-    <div className="mx-auto max-w-6xl">
-      <h1 className="text-2xl font-semibold tracking-tight text-neutral-900">Résumé Match</h1>
-      <p className="mt-2 text-neutral-700">
-        Save your résumé below. We rank the current month&apos;s HN postings by fit. Your résumé
-        is also used by the per-job draft tool on each listing.
-      </p>
-
-      <div className="mt-6">
-        <ResumeEditor />
+    <div className="mx-auto max-w-6xl space-y-6">
+      <div className="space-y-2">
+        <h1 className="text-2xl font-semibold tracking-tight">Résumé Match</h1>
+        <p className="text-muted-foreground">
+          Save your résumé below. We rank the current month&apos;s HN postings by fit. Your résumé
+          is also used by the per-job draft tool on each listing.
+        </p>
       </div>
 
-      <div className="mt-4 flex items-center gap-3">
-        <button
-          type="button"
-          onClick={handleMatch}
-          disabled={!canSubmit}
-          className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 disabled:cursor-not-allowed disabled:bg-neutral-300"
-        >
+      <ResumeEditor />
+
+      <div className="flex items-center gap-3">
+        <Button onClick={handleMatch} disabled={!canSubmit}>
           {loading ? 'Matching...' : 'Find matches'}
-        </button>
+        </Button>
         {!hasResume && (
-          <span className="text-xs text-neutral-500">Save a résumé (≥100 chars) first.</span>
+          <span className="text-xs text-muted-foreground">Save a résumé (≥100 chars) first.</span>
         )}
       </div>
 
       {error && (
-        <div className="mt-6 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-800">
-          {error}
-        </div>
+        <Card className="border-destructive/40 bg-destructive/10 text-destructive">
+          <CardContent className="p-3 text-sm">{error}</CardContent>
+        </Card>
       )}
 
       {results && results.length === 0 && !error && (
-        <p className="mt-6 text-sm text-neutral-600">No matches found.</p>
+        <p className="text-sm text-muted-foreground">No matches found.</p>
       )}
 
       {results && results.length > 0 && (
-        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {results.map((r, idx) => (
             <JobCard
               key={`${r.post_raw_id}-${idx}`}

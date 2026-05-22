@@ -3,6 +3,11 @@
 import { useEffect, useState } from 'react';
 import { useResume } from '@/lib/useResume';
 import ResumeEditor from './ResumeEditor';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Textarea } from '@/components/ui/textarea';
 
 const STYLES = [
   { id: 'classic_cover_letter', label: 'Classic cover letter', hint: 'Formal, 3 paragraphs, mentions résumé attached' },
@@ -26,8 +31,6 @@ type DraftState =
 
 export default function DraftPanel({
   postRawId,
-  applyEmail,
-  applyUrl,
 }: {
   postRawId: number;
   applyEmail?: string | null;
@@ -124,150 +127,142 @@ export default function DraftPanel({
   }
 
   return (
-    <section className="space-y-4 rounded-md border border-neutral-200 bg-white p-5">
-      <div className="flex items-baseline justify-between gap-4">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-neutral-500">
-          Draft outreach
-        </h2>
-        {hasResume && <span className="text-xs text-neutral-500">Résumé saved locally</span>}
-      </div>
-
-      {!hasResume ? (
-        <div className="space-y-3">
-          <p className="text-sm text-neutral-700">
-            Save your résumé below to draft a tailored email or cover letter. Stored only in your
-            browser.
-          </p>
-          <ResumeEditor />
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-baseline justify-between gap-4">
+          <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            Draft outreach
+          </CardTitle>
+          {hasResume && (
+            <span className="text-xs text-muted-foreground">Résumé saved locally</span>
+          )}
         </div>
-      ) : (
-        <>
-          <fieldset className="space-y-2">
-            <legend className="text-sm font-medium text-neutral-800">Style</legend>
-            <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-              {STYLES.map((s) => (
-                <label
-                  key={s.id}
-                  className={`flex cursor-pointer items-start gap-2 rounded-md border p-3 text-sm ${
-                    style === s.id
-                      ? 'border-neutral-900 bg-neutral-50'
-                      : 'border-neutral-200 hover:bg-neutral-50'
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="draft-style"
-                    value={s.id}
-                    checked={style === s.id}
-                    onChange={() => setStyle(s.id)}
-                    className="mt-1"
-                  />
-                  <span className="flex flex-col">
-                    <span className="font-medium text-neutral-900">{s.label}</span>
-                    <span className="text-xs text-neutral-600">{s.hint}</span>
-                  </span>
-                </label>
-              ))}
-            </div>
-          </fieldset>
-
-          {style === 'custom' && (
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-neutral-800" htmlFor="custom-instr">
-                Custom instructions
-              </label>
-              <textarea
-                id="custom-instr"
-                value={customInstructions}
-                onChange={(e) => setCustomInstructions(e.target.value)}
-                rows={4}
-                placeholder="e.g. write it as if i'm applying with a friend and we want to job-share"
-                className="w-full rounded-md border border-neutral-300 bg-white p-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-neutral-500 focus:outline-none"
-              />
-              <p className="text-xs text-neutral-500">
-                The AI uses these instructions plus the job posting and your résumé as context.
-              </p>
-            </div>
-          )}
-
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={generate}
-              disabled={!canDraft}
-              className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 disabled:cursor-not-allowed disabled:bg-neutral-300"
-            >
-              {draft.status === 'loading' ? 'Drafting…' : 'Draft email'}
-            </button>
-            {draft.status === 'done' && (
-              <button
-                type="button"
-                onClick={generate}
-                disabled={!canDraft}
-                className="rounded-md border border-neutral-300 px-3 py-2 text-sm font-medium text-neutral-800 hover:bg-neutral-100"
-              >
-                Regenerate
-              </button>
-            )}
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {!hasResume ? (
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Save your résumé below to draft a tailored email or cover letter. Stored only in
+              your browser.
+            </p>
+            <ResumeEditor />
           </div>
-
-          {draft.status === 'error' && (
-            <div className="rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-800">
-              {draft.message}
+        ) : (
+          <>
+            <div className="space-y-2">
+              <Label>Style</Label>
+              <RadioGroup
+                value={style}
+                onValueChange={(v) => setStyle(v as StyleId)}
+                className="grid grid-cols-1 gap-2 md:grid-cols-2"
+              >
+                {STYLES.map((s) => (
+                  <Label
+                    key={s.id}
+                    htmlFor={`style-${s.id}`}
+                    className={`flex cursor-pointer items-start gap-2 rounded-md border p-3 text-sm ${
+                      style === s.id ? 'border-primary bg-accent/40' : 'hover:bg-accent/40'
+                    }`}
+                  >
+                    <RadioGroupItem value={s.id} id={`style-${s.id}`} className="mt-1" />
+                    <div className="flex flex-col">
+                      <span className="font-medium text-foreground">{s.label}</span>
+                      <span className="text-xs text-muted-foreground">{s.hint}</span>
+                    </div>
+                  </Label>
+                ))}
+              </RadioGroup>
             </div>
-          )}
 
-          {draft.status === 'done' && (
-            <div className="space-y-3 rounded-md border border-neutral-200 bg-neutral-50 p-4 text-sm">
-              <div className="flex flex-wrap gap-3 text-xs text-neutral-700">
-                {draft.to && (
-                  <a className="underline" href={`mailto:${draft.to}?subject=${encodeURIComponent(draft.subject)}&body=${encodeURIComponent(draft.body)}`}>
-                    Open in mail app
-                  </a>
-                )}
-                {draft.apply_url && (
-                  <a className="underline" href={draft.apply_url} target="_blank" rel="noreferrer">
-                    Open apply link
-                  </a>
-                )}
-              </div>
-              <div>
-                <div className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
-                  Subject
-                </div>
-                <p className="text-neutral-900">{draft.subject}</p>
-              </div>
-              <div>
-                <div className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
-                  Body
-                </div>
-                <textarea
-                  readOnly
-                  value={draft.body}
-                  rows={Math.min(20, Math.max(8, draft.body.split('\n').length + 2))}
-                  className="mt-1 w-full rounded-md border border-neutral-300 bg-white p-2 font-mono text-xs text-neutral-900"
+            {style === 'custom' && (
+              <div className="space-y-1">
+                <Label htmlFor="custom-instr">Custom instructions</Label>
+                <Textarea
+                  id="custom-instr"
+                  value={customInstructions}
+                  onChange={(e) => setCustomInstructions(e.target.value)}
+                  rows={4}
+                  placeholder="e.g. write it as if i'm applying with a friend and we want to job-share"
                 />
+                <p className="text-xs text-muted-foreground">
+                  The AI uses these instructions plus the job posting and your résumé as context.
+                </p>
               </div>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={copyAll}
-                  className="rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-800 hover:bg-neutral-100"
-                >
-                  {copied === 'all' ? 'Copied' : 'Copy subject + body'}
-                </button>
-                <button
-                  type="button"
-                  onClick={copyResume}
-                  className="rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-800 hover:bg-neutral-100"
-                >
-                  {copied === 'resume' ? 'Copied' : 'Copy résumé text'}
-                </button>
-              </div>
+            )}
+
+            <div className="flex flex-wrap items-center gap-2">
+              <Button onClick={generate} disabled={!canDraft}>
+                {draft.status === 'loading' ? 'Drafting…' : 'Draft email'}
+              </Button>
+              {draft.status === 'done' && (
+                <Button variant="outline" onClick={generate} disabled={!canDraft}>
+                  Regenerate
+                </Button>
+              )}
             </div>
-          )}
-        </>
-      )}
-    </section>
+
+            {draft.status === 'error' && (
+              <Card className="border-destructive/40 bg-destructive/10 text-destructive">
+                <CardContent className="p-3 text-sm">{draft.message}</CardContent>
+              </Card>
+            )}
+
+            {draft.status === 'done' && (
+              <Card className="bg-muted/40">
+                <CardContent className="space-y-3 p-4 text-sm">
+                  <div className="flex flex-wrap gap-3 text-xs">
+                    {draft.to && (
+                      <a
+                        className="underline hover:text-foreground"
+                        href={`mailto:${draft.to}?subject=${encodeURIComponent(
+                          draft.subject,
+                        )}&body=${encodeURIComponent(draft.body)}`}
+                      >
+                        Open in mail app
+                      </a>
+                    )}
+                    {draft.apply_url && (
+                      <a
+                        className="underline hover:text-foreground"
+                        href={draft.apply_url}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Open apply link
+                      </a>
+                    )}
+                  </div>
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Subject
+                    </div>
+                    <p>{draft.subject}</p>
+                  </div>
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Body
+                    </div>
+                    <Textarea
+                      readOnly
+                      value={draft.body}
+                      rows={Math.min(20, Math.max(8, draft.body.split('\n').length + 2))}
+                      className="mt-1 font-mono text-xs"
+                    />
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button variant="outline" size="sm" onClick={copyAll}>
+                      {copied === 'all' ? 'Copied' : 'Copy subject + body'}
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={copyResume}>
+                      {copied === 'resume' ? 'Copied' : 'Copy résumé text'}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 }

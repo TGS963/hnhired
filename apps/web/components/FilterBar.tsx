@@ -2,6 +2,16 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Card } from '@/components/ui/card';
 
 type Values = {
   q?: string;
@@ -13,6 +23,9 @@ type Values = {
   contract?: string;
   nl?: string;
 };
+
+const REMOTE_NONE = '__any_remote__';
+const CONTRACT_NONE = '__any_contract__';
 
 export default function FilterBar({ defaultValues }: { defaultValues: Values }) {
   const router = useRouter();
@@ -47,96 +60,81 @@ export default function FilterBar({ defaultValues }: { defaultValues: Values }) 
     router.push('/');
   }
 
-  const input =
-    'w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 hover:bg-neutral-50 focus:border-neutral-400 focus:outline-none';
-
   return (
-    <form
-      onSubmit={onSubmit}
-      className="space-y-3 rounded-md border border-neutral-200 bg-white p-4"
-    >
-      <input
-        type="text"
-        value={v.nl ?? ''}
-        onChange={(e) => set('nl', e.target.value)}
-        placeholder="e.g. remote senior Rust climate startups >150k"
-        className={`${input} text-base`}
-      />
+    <Card className="p-4">
+      <form onSubmit={onSubmit} className="space-y-3">
+        <Input
+          value={v.nl ?? ''}
+          onChange={(e) => set('nl', e.target.value)}
+          placeholder="e.g. remote senior Rust climate startups >150k"
+          className="text-base"
+        />
 
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-3 lg:grid-cols-6">
-        <input
-          type="text"
-          value={v.q ?? ''}
-          onChange={(e) => set('q', e.target.value)}
-          placeholder="keyword"
-          className={input}
-        />
-        <select
-          value={v.remote ?? ''}
-          onChange={(e) => set('remote', e.target.value)}
-          className={input}
-        >
-          <option value="">any remote</option>
-          <option value="remote">remote</option>
-          <option value="hybrid">hybrid</option>
-          <option value="onsite">onsite</option>
-        </select>
-        <input
-          type="text"
-          value={v.loc ?? ''}
-          onChange={(e) => set('loc', e.target.value)}
-          placeholder="location"
-          className={input}
-        />
-        <input
-          type="text"
-          value={v.seniority ?? ''}
-          onChange={(e) => set('seniority', e.target.value)}
-          placeholder="seniority"
-          className={input}
-        />
-        <input
-          type="text"
-          value={v.tech ?? ''}
-          onChange={(e) => set('tech', e.target.value)}
-          placeholder="tech (comma-sep)"
-          className={input}
-        />
-        <input
-          type="number"
-          value={v.comp_min ?? ''}
-          onChange={(e) => set('comp_min', e.target.value)}
-          placeholder="min salary"
-          className={input}
-        />
-        <select
-          value={v.contract ?? ''}
-          onChange={(e) => set('contract', e.target.value)}
-          className={input}
-        >
-          <option value="">any type</option>
-          <option value="fulltime">full-time</option>
-          <option value="contract">contract</option>
-          <option value="parttime">part-time</option>
-          <option value="intern">intern</option>
-        </select>
-      </div>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-3 lg:grid-cols-6">
+          <Input
+            value={v.q ?? ''}
+            onChange={(e) => set('q', e.target.value)}
+            placeholder="keyword"
+          />
+          <Select
+            value={v.remote || REMOTE_NONE}
+            onValueChange={(val) => set('remote', val === REMOTE_NONE ? '' : val)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="any remote" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={REMOTE_NONE}>any remote</SelectItem>
+              <SelectItem value="remote">remote</SelectItem>
+              <SelectItem value="hybrid">hybrid</SelectItem>
+              <SelectItem value="onsite">onsite</SelectItem>
+            </SelectContent>
+          </Select>
+          <Input
+            value={v.loc ?? ''}
+            onChange={(e) => set('loc', e.target.value)}
+            placeholder="location"
+          />
+          <Input
+            value={v.seniority ?? ''}
+            onChange={(e) => set('seniority', e.target.value)}
+            placeholder="seniority"
+          />
+          <Input
+            value={v.tech ?? ''}
+            onChange={(e) => set('tech', e.target.value)}
+            placeholder="tech (comma-sep)"
+          />
+          <Input
+            type="number"
+            value={v.comp_min ?? ''}
+            onChange={(e) => set('comp_min', e.target.value)}
+            placeholder="min salary"
+          />
+          <Select
+            value={v.contract || CONTRACT_NONE}
+            onValueChange={(val) => set('contract', val === CONTRACT_NONE ? '' : val)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="any type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={CONTRACT_NONE}>any type</SelectItem>
+              <SelectItem value="fulltime">full-time</SelectItem>
+              <SelectItem value="contract">contract</SelectItem>
+              <SelectItem value="parttime">part-time</SelectItem>
+              <SelectItem value="intern">intern</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
-      <div className="flex items-center gap-2">
-        <button
-          type="submit"
-          className="rounded-md border border-neutral-900 bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800"
-        >
-          Search
-        </button>
-        <button
-          type="button"
-          onClick={onClear}
-          className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
-        >
-          Clear
-        </button>
-      </div>
-    </form>
+        <div className="flex items-center gap-2">
+          <Button type="submit">Search</Button>
+          <Button type="button" variant="outline" onClick={onClear}>
+            Clear
+          </Button>
+        </div>
+      </form>
+    </Card>
   );
 }

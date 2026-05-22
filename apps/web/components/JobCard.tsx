@@ -1,3 +1,7 @@
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+
 export type JobCardRow = {
   post_raw_id: string | number;
   company?: string | null;
@@ -52,50 +56,41 @@ export default function JobCard({
   const title = row.role_titles?.[0] ?? '';
   const loc = (row.locations ?? []).join(', ');
   const salary = formatSalary(row);
+
   return (
-    <div className="flex flex-col gap-2 rounded-md border border-neutral-200 bg-white p-4 hover:bg-neutral-50">
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2">
-          {rank != null && (
-            <span className="rounded-md bg-neutral-900 px-2 py-0.5 text-xs font-medium text-white">
-              #{rank}
-            </span>
-          )}
-          <div className="font-bold text-neutral-900">{row.company ?? 'Unknown'}</div>
+    <Card className="transition-colors hover:bg-accent/40">
+      <CardHeader className="space-y-1 pb-2">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-2">
+            {rank != null && <Badge>#{rank}</Badge>}
+            <CardTitle className="text-base">{row.company ?? 'Unknown'}</CardTitle>
+          </div>
+          {row.remote_policy ? <Badge variant="outline">{row.remote_policy}</Badge> : null}
         </div>
-        {row.remote_policy ? (
-          <span className="rounded-md border border-neutral-200 px-2 py-0.5 text-xs text-neutral-700">
-            {row.remote_policy}
-          </span>
+        {title ? <p className="text-sm text-muted-foreground">{title}</p> : null}
+      </CardHeader>
+      <CardContent className="space-y-2 text-sm">
+        {loc ? <div className="text-xs text-muted-foreground">{loc}</div> : null}
+        {salary ? <div className="text-xs">{salary}</div> : null}
+        <div className="text-xs text-muted-foreground">{relativeTime(row.posted_at)}</div>
+        {row.tech_stack && row.tech_stack.length > 0 ? (
+          <div className="flex flex-wrap gap-1">
+            {row.tech_stack.slice(0, 5).map((t) => (
+              <Badge key={t} variant="secondary" className="font-normal">
+                {t}
+              </Badge>
+            ))}
+          </div>
         ) : null}
-      </div>
-      {title ? <div className="text-sm text-neutral-800">{title}</div> : null}
-      {loc ? <div className="text-xs text-neutral-600">{loc}</div> : null}
-      {salary ? <div className="text-xs text-neutral-700">{salary}</div> : null}
-      <div className="text-xs text-neutral-500">{relativeTime(row.posted_at)}</div>
-      {row.tech_stack && row.tech_stack.length > 0 ? (
-        <div className="flex flex-wrap gap-1">
-          {row.tech_stack.slice(0, 5).map((t) => (
-            <span
-              key={t}
-              className="rounded-md border border-neutral-200 bg-neutral-50 px-2 py-0.5 text-xs text-neutral-700"
-            >
-              {t}
-            </span>
-          ))}
-        </div>
-      ) : null}
-      {why ? (
-        <div className="text-xs italic text-neutral-600">
-          {whyLabel ?? 'why this matched'}: {why}
-        </div>
-      ) : null}
-      <a
-        href={`/job/${id}`}
-        className="mt-1 inline-block text-sm font-medium text-neutral-900 underline hover:text-neutral-700"
-      >
-        View
-      </a>
-    </div>
+        {why ? (
+          <p className="text-xs italic text-muted-foreground">
+            {whyLabel ?? 'why this matched'}: {why}
+          </p>
+        ) : null}
+        <Button asChild variant="link" size="sm" className="px-0">
+          <a href={`/job/${id}`}>View →</a>
+        </Button>
+      </CardContent>
+    </Card>
   );
 }
