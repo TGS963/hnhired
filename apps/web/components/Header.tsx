@@ -54,7 +54,6 @@ export default function Header() {
           >
             <GithubMark size={15} />
           </a>
-          <span className="font-mono text-[10.5px] px-1.5 py-0.5 border border-border-c rounded-[4px] text-fg-muted bg-surface tracking-normal max-[720px]:hidden" aria-hidden>⌘K</span>
           <ThemeToggle />
         </div>
       </div>

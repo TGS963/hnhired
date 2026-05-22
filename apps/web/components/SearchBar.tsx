@@ -89,7 +89,7 @@ export default function SearchBar() {
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={onKeyDown}
       />
-      {value && (
+      {value ? (
         <button
           type="button"
           className="w-6 h-6 rounded-[5px] inline-flex items-center justify-center text-fg-muted bg-transparent border-none cursor-pointer hover:text-fg hover:bg-hover"
@@ -101,6 +101,13 @@ export default function SearchBar() {
         >
           <X size={14} />
         </button>
+      ) : (
+        <span
+          className="font-mono text-[10.5px] px-1.5 py-0.5 border border-border-c rounded-[4px] text-fg-muted bg-bg-2 tracking-normal select-none mr-0.5 max-[720px]:hidden"
+          aria-hidden
+        >
+          ⌘K
+        </span>
       )}
     </form>
   );
