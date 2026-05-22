@@ -1,9 +1,10 @@
+import { unstable_cache } from 'next/cache';
 import { query } from './db';
 import type { Post } from './schemas';
 
 export type FullPost = Post & Record<string, any>;
 
-export async function fetchPost(id: number): Promise<FullPost | null> {
+async function fetchPostUncached(id: number): Promise<FullPost | null> {
   const result = await query<Post>('SELECT * FROM posts WHERE post_raw_id = $1 LIMIT 1', [id]);
   const row = (result as any).rows
     ? (result as any).rows[0]
@@ -12,3 +13,9 @@ export async function fetchPost(id: number): Promise<FullPost | null> {
       : undefined;
   return row ?? null;
 }
+
+export const fetchPost = unstable_cache(
+  async (id: number) => fetchPostUncached(id),
+  ['post-by-id'],
+  { revalidate: 86400, tags: ['post'] },
+);
