@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "tsx --env-file=../../.env src/run.ts"
+    "start": "tsx --env-file-if-exists=../../.env src/run.ts"
   },
   "dependencies": {
     "pg": "^8.13.0",
