@@ -3,11 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useResume } from '@/lib/useResume';
 import ResumeEditor from './ResumeEditor';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Textarea } from '@/components/ui/textarea';
 
 const STYLES = [
   { id: 'classic_cover_letter', label: 'Classic cover letter', hint: 'Formal, 3 paragraphs, mentions résumé attached' },
@@ -58,6 +55,8 @@ export default function DraftPanel({
   if (!hydrated) return null;
 
   const hasResume = resume.trim().length >= 100;
+  if (!hasResume) return null;
+
   const customValid = style !== 'custom' || customInstructions.trim().length > 0;
   const canDraft = hasResume && customValid && draft.status !== 'loading';
 
@@ -127,18 +126,30 @@ export default function DraftPanel({
   }
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex items-baseline justify-between gap-4">
-          <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            Draft outreach
-          </CardTitle>
-          {hasResume && (
-            <span className="text-xs text-muted-foreground">Résumé saved locally</span>
-          )}
+    <section
+      style={{
+        marginTop: 32,
+        padding: 20,
+        background: 'var(--bg-2)',
+        borderRadius: 10,
+        border: '1px solid var(--border-c)',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'baseline',
+          justifyContent: 'space-between',
+          gap: 16,
+          marginBottom: 16,
+        }}
+      >
+        <div className="hn-detail-summary-tag" style={{ marginBottom: 0 }}>
+          ◇ Draft outreach
         </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
+        {hasResume && <span className="hn-muted" style={{ fontSize: 12 }}>Résumé saved locally</span>}
+      </div>
+      <div className="space-y-4">
         {!hasResume ? (
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">
@@ -160,9 +171,11 @@ export default function DraftPanel({
                   <Label
                     key={s.id}
                     htmlFor={`style-${s.id}`}
-                    className={`flex cursor-pointer items-start gap-2 rounded-md border p-3 text-sm ${
-                      style === s.id ? 'border-primary bg-accent/40' : 'hover:bg-accent/40'
-                    }`}
+                    className="flex cursor-pointer items-start gap-2 rounded-md p-3 text-sm"
+                    style={{
+                      border: `1px solid ${style === s.id ? 'var(--brand)' : 'var(--border-c)'}`,
+                      background: style === s.id ? 'var(--brand-soft)' : 'var(--surface)',
+                    }}
                   >
                     <RadioGroupItem value={s.id} id={`style-${s.id}`} className="mt-1" />
                     <div className="flex flex-col">
@@ -177,92 +190,113 @@ export default function DraftPanel({
             {style === 'custom' && (
               <div className="space-y-1">
                 <Label htmlFor="custom-instr">Custom instructions</Label>
-                <Textarea
+                <textarea
                   id="custom-instr"
+                  className="hn-textarea"
                   value={customInstructions}
                   onChange={(e) => setCustomInstructions(e.target.value)}
                   rows={4}
                   placeholder="e.g. write it as if i'm applying with a friend and we want to job-share"
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="hn-muted" style={{ fontSize: 12 }}>
                   The AI uses these instructions plus the job posting and your résumé as context.
                 </p>
               </div>
             )}
 
             <div className="flex flex-wrap items-center gap-2">
-              <Button onClick={generate} disabled={!canDraft}>
+              <button
+                type="button"
+                className="hn-btn hn-btn-primary"
+                onClick={generate}
+                disabled={!canDraft}
+              >
                 {draft.status === 'loading' ? 'Drafting…' : 'Draft email'}
-              </Button>
+              </button>
               {draft.status === 'done' && (
-                <Button variant="outline" onClick={generate} disabled={!canDraft}>
+                <button type="button" className="hn-btn" onClick={generate} disabled={!canDraft}>
                   Regenerate
-                </Button>
+                </button>
               )}
             </div>
 
             {draft.status === 'error' && (
-              <Card className="border-destructive/40 bg-destructive/10 text-destructive">
-                <CardContent className="p-3 text-sm">{draft.message}</CardContent>
-              </Card>
+              <div
+                className="hn-detail-summary"
+                style={{ borderLeftColor: 'var(--destructive)' }}
+              >
+                <span className="hn-detail-summary-tag" style={{ color: 'var(--destructive)' }}>
+                  Error
+                </span>
+                <p>{draft.message}</p>
+              </div>
             )}
 
             {draft.status === 'done' && (
-              <Card className="bg-muted/40">
-                <CardContent className="space-y-3 p-4 text-sm">
-                  <div className="flex flex-wrap gap-3 text-xs">
-                    {draft.to && (
-                      <a
-                        className="underline hover:text-foreground"
-                        href={`mailto:${draft.to}?subject=${encodeURIComponent(
-                          draft.subject,
-                        )}&body=${encodeURIComponent(draft.body)}`}
-                      >
-                        Open in mail app
-                      </a>
-                    )}
-                    {draft.apply_url && (
-                      <a
-                        className="underline hover:text-foreground"
-                        href={draft.apply_url}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        Open apply link
-                      </a>
-                    )}
+              <div
+                style={{
+                  background: 'var(--surface)',
+                  border: '1px solid var(--border-c)',
+                  borderRadius: 10,
+                  padding: 16,
+                }}
+                className="space-y-3 text-sm"
+              >
+                <div className="flex flex-wrap gap-3" style={{ fontSize: 12 }}>
+                  {draft.to && (
+                    <a
+                      className="hn-muted"
+                      style={{ textDecoration: 'underline' }}
+                      href={`mailto:${draft.to}?subject=${encodeURIComponent(
+                        draft.subject,
+                      )}&body=${encodeURIComponent(draft.body)}`}
+                    >
+                      Open in mail app
+                    </a>
+                  )}
+                  {draft.apply_url && (
+                    <a
+                      className="hn-muted"
+                      style={{ textDecoration: 'underline' }}
+                      href={draft.apply_url}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Open apply link
+                    </a>
+                  )}
+                </div>
+                <div>
+                  <div className="hn-detail-summary-tag" style={{ marginBottom: 4 }}>
+                    Subject
                   </div>
-                  <div>
-                    <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      Subject
-                    </div>
-                    <p>{draft.subject}</p>
+                  <p>{draft.subject}</p>
+                </div>
+                <div>
+                  <div className="hn-detail-summary-tag" style={{ marginBottom: 4 }}>
+                    Body
                   </div>
-                  <div>
-                    <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      Body
-                    </div>
-                    <Textarea
-                      readOnly
-                      value={draft.body}
-                      rows={Math.min(20, Math.max(8, draft.body.split('\n').length + 2))}
-                      className="mt-1 font-mono text-xs"
-                    />
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <Button variant="outline" size="sm" onClick={copyAll}>
-                      {copied === 'all' ? 'Copied' : 'Copy subject + body'}
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={copyResume}>
-                      {copied === 'resume' ? 'Copied' : 'Copy résumé text'}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+                  <textarea
+                    readOnly
+                    value={draft.body}
+                    rows={Math.min(20, Math.max(8, draft.body.split('\n').length + 2))}
+                    className="hn-textarea"
+                    style={{ marginTop: 4 }}
+                  />
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button type="button" className="hn-btn" onClick={copyAll}>
+                    {copied === 'all' ? 'Copied' : 'Copy subject + body'}
+                  </button>
+                  <button type="button" className="hn-btn" onClick={copyResume}>
+                    {copied === 'resume' ? 'Copied' : 'Copy résumé text'}
+                  </button>
+                </div>
+              </div>
             )}
           </>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   );
 }

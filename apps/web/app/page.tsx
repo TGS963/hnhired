@@ -1,8 +1,19 @@
+import type { Metadata } from 'next';
+import { cookies } from 'next/headers';
 import { nlSearch } from '@/lib/search';
 import { browse, BROWSE_PAGE_SIZE } from '@/lib/queries';
+import SearchBar from '@/components/SearchBar';
 import FilterBar from '@/components/FilterBar';
-import JobCard, { type JobCardRow } from '@/components/JobCard';
 import InfiniteJobList from '@/components/InfiniteJobList';
+import JobRow, { type JobCardRow } from '@/components/JobRow';
+import type { Layout } from '@/components/LayoutToggle';
+
+export const metadata: Metadata = {
+  title: 'Browse HN "Who is hiring?" jobs — remote, salary, stack filters',
+  description:
+    'Search this month\'s Hacker News "Who is hiring?" thread. Filter by remote, salary, seniority, and tech stack. AI-summarized listings with résumé matching.',
+  alternates: { canonical: '/' },
+};
 
 type SearchParams = {
   q?: string;
@@ -13,6 +24,7 @@ type SearchParams = {
   comp_min?: string;
   contract?: string;
   nl?: string;
+  saved?: string;
 };
 
 const BROWSE_KEYS = ['q', 'remote', 'loc', 'seniority', 'tech', 'comp_min', 'contract'] as const;
@@ -23,30 +35,36 @@ export default async function Page({
   searchParams: Promise<SearchParams>;
 }) {
   const params = await searchParams;
+  const cookieStore = await cookies();
+  const layoutCookie = cookieStore.get('hnhired:layout')?.value;
+  const initialLayout: Layout = layoutCookie === 'cards' ? 'cards' : 'rows';
 
   if (params.nl && params.nl.trim().length > 0) {
     const res = await nlSearch(params.nl);
     const results = (res?.posts ?? []) as JobCardRow[];
     const whyByPostId = (res?.whyByPostId ?? {}) as Record<string, string>;
     return (
-      <div className="space-y-6">
+      <>
+        <SearchBar />
         <FilterBar defaultValues={params} />
         {results.length === 0 ? (
-          <div className="rounded-md border border-neutral-200 bg-neutral-50 px-4 py-12 text-center text-sm text-neutral-600">
-            No matches
+          <div className="hn-empty">
+            <div className="hn-empty-title">No matches</div>
+            <div className="hn-muted">Try a different query.</div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="hn-list">
             {results.map((row) => (
-              <JobCard
+              <JobRow
                 key={String(row.post_raw_id)}
                 row={row}
                 why={whyByPostId[String(row.post_raw_id)]}
+                whyLabel="why"
               />
             ))}
           </div>
         )}
-      </div>
+      </>
     );
   }
 
@@ -60,23 +78,21 @@ export default async function Page({
     }
   }
 
+  const savedOnly = params.saved === '1';
   const initial = (await browse(usp, { limit: BROWSE_PAGE_SIZE, offset: 0 })) as JobCardRow[];
   const initialNextOffset = initial.length === BROWSE_PAGE_SIZE ? BROWSE_PAGE_SIZE : null;
 
   return (
-    <div className="space-y-6">
+    <>
+      <SearchBar />
       <FilterBar defaultValues={params} />
-      {initial.length === 0 ? (
-        <div className="rounded-md border border-neutral-200 bg-neutral-50 px-4 py-12 text-center text-sm text-neutral-600">
-          No matches
-        </div>
-      ) : (
-        <InfiniteJobList
-          initial={initial}
-          initialNextOffset={initialNextOffset}
-          filters={filters}
-        />
-      )}
-    </div>
+      <InfiniteJobList
+        initial={initial}
+        initialNextOffset={initialNextOffset}
+        filters={filters}
+        initialLayout={initialLayout}
+        savedOnly={savedOnly}
+      />
+    </>
   );
 }

@@ -1,15 +1,35 @@
 'use client';
 
 import { useState } from 'react';
-import JobCard, { type JobCardRow } from '@/components/JobCard';
+import Link from 'next/link';
 import ResumeEditor from '@/components/ResumeEditor';
 import { useResume } from '@/lib/useResume';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import type { JobCardRow } from '@/components/JobCard';
 
 type MatchResult = JobCardRow & {
   fit_note: string;
 };
+
+function formatSalary(row: JobCardRow): string | null {
+  if (row.salary_min == null && row.salary_max == null) return null;
+  const sym =
+    row.currency === 'USD'
+      ? '$'
+      : row.currency === 'EUR'
+        ? '€'
+        : row.currency === 'GBP'
+          ? '£'
+          : row.currency
+            ? `${row.currency} `
+            : '$';
+  const k = (n: number) => `${sym}${Math.round(n / 1000)}k`;
+  if (row.salary_min != null && row.salary_max != null) {
+    return `${sym}${Math.round(row.salary_min / 1000)}–${Math.round(row.salary_max / 1000)}k`;
+  }
+  if (row.salary_min != null) return `${k(row.salary_min)}+`;
+  if (row.salary_max != null) return `up to ${k(row.salary_max)}`;
+  return null;
+}
 
 export default function MatchPage() {
   const { resume, hydrated } = useResume();
@@ -57,7 +77,7 @@ export default function MatchPage() {
         return;
       }
       const data = await res.json();
-      const items: MatchResult[] = Array.isArray(data) ? data : data?.results ?? [];
+      const items: MatchResult[] = Array.isArray(data) ? data : (data?.results ?? []);
       setResults(items.slice(0, 20));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
@@ -69,10 +89,10 @@ export default function MatchPage() {
   if (!hydrated) return null;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      <div className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">Résumé Match</h1>
-        <p className="text-muted-foreground">
+    <div className="hn-match">
+      <div className="hn-match-head">
+        <h1>Résumé Match</h1>
+        <p>
           Save your résumé below. We rank the current month&apos;s HN postings by fit. Your résumé
           is also used by the per-job draft tool on each listing.
         </p>
@@ -80,36 +100,65 @@ export default function MatchPage() {
 
       <ResumeEditor />
 
-      <div className="flex items-center gap-3">
-        <Button onClick={handleMatch} disabled={!canSubmit}>
-          {loading ? 'Matching...' : 'Find matches'}
-        </Button>
+      <div className="hn-match-actions">
+        <button className="hn-btn hn-btn-primary" disabled={!canSubmit} onClick={handleMatch}>
+          {loading ? 'Matching…' : 'Find matches'}
+        </button>
         {!hasResume && (
-          <span className="text-xs text-muted-foreground">Save a résumé (≥100 chars) first.</span>
+          <span className="hn-muted hn-mono" style={{ fontSize: '12px' }}>
+            Save a résumé (≥100 chars) first.
+          </span>
         )}
       </div>
 
       {error && (
-        <Card className="border-destructive/40 bg-destructive/10 text-destructive">
-          <CardContent className="p-3 text-sm">{error}</CardContent>
-        </Card>
+        <div
+          className="hn-detail-summary"
+          style={{ borderLeftColor: 'var(--destructive)', marginTop: '16px' }}
+        >
+          <span className="hn-detail-summary-tag">Error</span>
+          <p>{error}</p>
+        </div>
       )}
 
       {results && results.length === 0 && !error && (
-        <p className="text-sm text-muted-foreground">No matches found.</p>
+        <p className="hn-muted" style={{ marginTop: '16px', fontSize: '13px' }}>
+          No matches found.
+        </p>
       )}
 
       {results && results.length > 0 && (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {results.map((r, idx) => (
-            <JobCard
-              key={`${r.post_raw_id}-${idx}`}
-              row={r}
-              rank={idx + 1}
-              whyLabel="fit"
-              why={r.fit_note}
-            />
-          ))}
+        <div className="hn-list" style={{ marginTop: '24px' }}>
+          {results.map((r, idx) => {
+            const salary = formatSalary(r);
+            const locs = r.locations?.length ? r.locations.join(' · ') : null;
+            const remote = r.remote_policy ?? null;
+            return (
+              <Link
+                key={`${r.post_raw_id}-${idx}`}
+                href={`/job/${r.post_raw_id}`}
+                className="hn-match-row"
+              >
+                <span className="hn-match-rank hn-mono">
+                  {String(idx + 1).padStart(2, '0')}
+                </span>
+                <div className="hn-match-body">
+                  <div className="hn-row-title">
+                    <span className="hn-company">{r.company ?? 'Unknown'}</span>
+                    {r.role_titles?.[0] && <span className="hn-role">{r.role_titles[0]}</span>}
+                  </div>
+                  {r.fit_note && <p className="hn-match-fit">{r.fit_note}</p>}
+                  <div className="hn-match-meta hn-row-meta">
+                    {remote && (
+                      <span className={`hn-tag-${remote.toLowerCase()}`}>{remote}</span>
+                    )}
+                    {locs && <span>{locs}</span>}
+                    {salary && <span className="hn-mono hn-sal">{salary}</span>}
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>

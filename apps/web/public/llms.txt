@@ -1,0 +1,36 @@
+# HN Hired
+
+> A focused browser and résumé-matching tool for Hacker News "Who is hiring?" job posts. Every post is parsed by an LLM into structured fields (company, role, location, remote policy, salary, equity, visa, tech stack, seniority, contract type) and indexed for full-text and semantic search.
+
+## What it does
+
+- **Browse** the current month's HN "Who is hiring?" thread with structured filters: remote policy, minimum compensation, seniority, tech stack, location.
+- **Natural-language search** — type a query like "remote senior Rust climate startups >$150k" and the app parses the intent into structured filters plus vector search.
+- **Résumé match** — paste your résumé once (stored only in your browser's local storage); the app ranks the current month's postings by fit and explains why each role matched.
+- **Outreach drafts** — generate a tailored cover letter or cold email for any specific post, in one of several voice styles, grounded in your résumé and the post's content.
+
+## What it is not
+
+- Not a general job board. Scope is HN "Who is hiring?" only.
+- Not a résumé storage service. Résumés never leave the user's browser unless they explicitly submit one for match or draft.
+
+## Primary pages
+
+- `/` — Browse listings with filters, search, and infinite scroll.
+- `/match` — Résumé matching against the current month.
+- `/job/<id>` — Detail view for a single posting (AI summary, structured fields, raw HN comment, outreach drafting).
+
+## Endpoints (read-only, rate-limited)
+
+- `GET /api/browse` — filtered listings.
+- `GET /api/search` — natural-language → structured search.
+- `POST /api/match` — résumé ranking. Body: `{ resume: string, consent: true }`.
+- `POST /api/draft` — outreach draft generation. Body: `{ resume, post_raw_id, consent, style, custom_instructions? }`.
+
+## Data source
+
+[Hacker News](https://news.ycombinator.com) — the monthly "Ask HN: Who is hiring?" thread is ingested, parsed into structured fields by an LLM, and indexed.
+
+## Contact
+
+Source data flows from HN; for issues with the app open a GitHub issue on the project repo.
