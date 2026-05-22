@@ -38,4 +38,3 @@ npm run web:dev
 | `DATABASE_URL` | both | Neon Postgres connection string |
 | `GOOGLE_API_KEY` | both | Gemini extraction + embeddings + search/match |
 | `EXTRACTOR_VERSION` | ingest | append-only versioning in `posts_extractions` |
-| `SLACK_WEBHOOK_URL` | CI | optional ingest-failure alert |

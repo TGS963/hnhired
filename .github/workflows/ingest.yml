@@ -35,12 +35,3 @@ jobs:
 
       - name: Run ingest
         run: npm run -w @hnhired/ingest start
-
-      - name: Notify Slack on failure
-        if: failure() && env.SLACK_WEBHOOK_URL != ''
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        run: |
-          curl -X POST -H 'Content-type: application/json' \
-            --data "{\"text\":\"Workflow *${{ github.workflow }}* failed\nRun: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\nCommit: ${{ github.sha }}\"}" \
-            "$SLACK_WEBHOOK_URL"
