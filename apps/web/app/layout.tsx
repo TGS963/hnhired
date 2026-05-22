@@ -77,18 +77,6 @@ export default function RootLayout({
               <main className="flex-1 w-full max-w-[1200px] mx-auto pt-8 px-8 pb-24 max-[720px]:pt-5 max-[720px]:px-4 max-[720px]:pb-20">
                 {children}
               </main>
-              <footer className="border-t border-border-c py-6 px-8 text-center text-[12.5px]">
-                Data from{' '}
-                <a
-                  href="https://news.ycombinator.com"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-fg border-b border-border-strong hover:text-brand"
-                >
-                  Hacker News
-                </a>
-                .
-              </footer>
             </div>
           </div>
           {modal}
