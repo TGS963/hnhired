@@ -5,6 +5,10 @@ import { useEffect, useState } from 'react';
 
 export type Layout = 'rows' | 'cards';
 
+const BTN_BASE =
+  'inline-flex items-center gap-[5px] px-2 py-1 rounded-[5px] text-xs font-medium bg-transparent border-none cursor-pointer transition-colors duration-100 text-fg-muted hover:text-fg';
+const BTN_ACTIVE = 'bg-surface text-fg shadow-[0_1px_2px_oklch(0_0_0_/_0.06)]';
+
 export default function LayoutToggle({
   initial,
   onChange,
@@ -26,10 +30,10 @@ export default function LayoutToggle({
   }
 
   return (
-    <div className="hn-search-mode" style={{ marginLeft: 'auto' }}>
+    <div className="ml-auto flex items-center gap-0.5 p-0.5 bg-bg-2 rounded-[7px] border border-border-c">
       <button
         type="button"
-        className={layout === 'rows' ? 'is-active' : ''}
+        className={layout === 'rows' ? `${BTN_BASE} ${BTN_ACTIVE}` : BTN_BASE}
         onClick={() => set('rows')}
         aria-label="Row layout"
       >
@@ -37,7 +41,7 @@ export default function LayoutToggle({
       </button>
       <button
         type="button"
-        className={layout === 'cards' ? 'is-active' : ''}
+        className={layout === 'cards' ? `${BTN_BASE} ${BTN_ACTIVE}` : BTN_BASE}
         onClick={() => set('cards')}
         aria-label="Card layout"
       >

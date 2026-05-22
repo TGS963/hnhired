@@ -54,6 +54,20 @@ const STACK_OPTS = [
   'ml',
 ];
 
+const CHIP_BASE =
+  'inline-flex items-center gap-1.5 px-[9px] py-[5px] rounded-[6px] text-[12.5px] font-medium bg-transparent border cursor-pointer transition-colors duration-100 hover:bg-hover hover:text-fg';
+const CHIP_INACTIVE = 'text-fg-muted border-transparent';
+const CHIP_ACTIVE =
+  'text-fg bg-brand-soft border-[color:color-mix(in_oklch,var(--brand)_25%,transparent)]';
+
+const POPOVER =
+  'absolute top-[calc(100%+4px)] left-0 min-w-[180px] max-h-[320px] overflow-y-auto bg-surface border border-border-c rounded-lg shadow-[var(--shadow-pop)] p-1 z-30';
+const POPOVER_ITEM_BASE =
+  'w-full flex items-center justify-between px-2 py-1.5 rounded-[5px] text-[13px] bg-transparent border-0 cursor-pointer text-left transition-colors duration-100 hover:bg-hover';
+
+const CHIP_VALUE =
+  'font-medium text-brand dark:text-[color:color-mix(in_oklch,var(--brand)_70%,white)]';
+
 export default function FilterBar({ defaultValues }: { defaultValues: Values }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -103,8 +117,8 @@ export default function FilterBar({ defaultValues }: { defaultValues: Values }) 
   }
 
   return (
-    <div className="hn-filters">
-      <div className="hn-filters-row">
+    <div className="mb-2">
+      <div className="flex items-center gap-1.5 flex-wrap py-1 max-[720px]:gap-1">
         <SingleChip
           label="Remote"
           value={remote}
@@ -133,17 +147,17 @@ export default function FilterBar({ defaultValues }: { defaultValues: Values }) 
           onToggle={toggleTech}
           onClear={() => setParam('tech', null)}
         />
-        <div className="hn-filters-spacer" />
+        <div className="flex-1 min-w-[12px]" />
         <button
           type="button"
-          className={`hn-toggle ${hideSeen ? 'is-on' : ''}`}
+          className={`${CHIP_BASE} ${hideSeen ? CHIP_ACTIVE : CHIP_INACTIVE}`}
           onClick={toggleHideSeen}
         >
           <span>Hide seen</span>
         </button>
         <button
           type="button"
-          className={`hn-toggle ${savedOnly ? 'is-on' : ''}`}
+          className={`${CHIP_BASE} ${savedOnly ? CHIP_ACTIVE : CHIP_INACTIVE}`}
           onClick={toggleSaved}
         >
           <span>Saved only</span>
@@ -181,15 +195,15 @@ function SingleChip({
   const valueLabel = options.find((o) => o.id === value)?.label;
 
   return (
-    <div className="hn-chip-wrap" ref={ref}>
+    <div className="relative inline-flex items-center" ref={ref}>
       <button
         type="button"
-        className={`hn-chip ${isActive ? 'is-active' : ''}`}
+        className={`${CHIP_BASE} ${isActive ? CHIP_ACTIVE : CHIP_INACTIVE}`}
         onClick={() => setOpen((v) => !v)}
       >
-        <span className="hn-chip-label">{label}</span>
+        <span className={isActive ? 'text-fg-muted' : ''}>{label}</span>
         {isActive ? (
-          <span className="hn-chip-value">{valueLabel}</span>
+          <span className={CHIP_VALUE}>{valueLabel}</span>
         ) : (
           <ChevronDown size={10} />
         )}
@@ -197,7 +211,7 @@ function SingleChip({
       {isActive && (
         <button
           type="button"
-          className="hn-chip-clear"
+          className="-ml-1 w-[18px] h-[18px] rounded-[4px] inline-flex items-center justify-center text-fg-muted bg-transparent border-0 cursor-pointer hover:text-fg hover:bg-hover"
           onClick={(e) => {
             e.stopPropagation();
             onClear();
@@ -208,14 +222,14 @@ function SingleChip({
         </button>
       )}
       {open && (
-        <div className="hn-popover">
+        <div className={POPOVER}>
           {options.map((opt) => {
             const active = value === opt.id || (!value && opt.id === 'any');
             return (
               <button
                 key={opt.id}
                 type="button"
-                className={`hn-popover-item ${active ? 'is-active' : ''}`}
+                className={`${POPOVER_ITEM_BASE} ${active ? 'text-brand' : 'text-fg'}`}
                 onClick={() => {
                   onChange(opt.id);
                   setOpen(false);
@@ -260,15 +274,15 @@ function MultiChip({
   const valueText = values.length === 1 ? values[0] : `${values.length} selected`;
 
   return (
-    <div className="hn-chip-wrap" ref={ref}>
+    <div className="relative inline-flex items-center" ref={ref}>
       <button
         type="button"
-        className={`hn-chip ${isActive ? 'is-active' : ''}`}
+        className={`${CHIP_BASE} ${isActive ? CHIP_ACTIVE : CHIP_INACTIVE}`}
         onClick={() => setOpen((v) => !v)}
       >
-        <span className="hn-chip-label">{label}</span>
+        <span className={isActive ? 'text-fg-muted' : ''}>{label}</span>
         {isActive ? (
-          <span className="hn-chip-value">{valueText}</span>
+          <span className={CHIP_VALUE}>{valueText}</span>
         ) : (
           <ChevronDown size={10} />
         )}
@@ -276,7 +290,7 @@ function MultiChip({
       {isActive && (
         <button
           type="button"
-          className="hn-chip-clear"
+          className="-ml-1 w-[18px] h-[18px] rounded-[4px] inline-flex items-center justify-center text-fg-muted bg-transparent border-0 cursor-pointer hover:text-fg hover:bg-hover"
           onClick={(e) => {
             e.stopPropagation();
             onClear();
@@ -287,14 +301,14 @@ function MultiChip({
         </button>
       )}
       {open && (
-        <div className="hn-popover">
+        <div className={POPOVER}>
           {options.map((opt) => {
             const active = values.includes(opt);
             return (
               <button
                 key={opt}
                 type="button"
-                className={`hn-popover-item ${active ? 'is-active' : ''}`}
+                className={`${POPOVER_ITEM_BASE} ${active ? 'text-brand' : 'text-fg'}`}
                 onClick={() => onToggle(opt)}
               >
                 {opt}

@@ -53,18 +53,29 @@ export default function SearchBar() {
   }
 
   return (
-    <form className="hn-search" onSubmit={onSubmit}>
-      <div className="hn-search-mode">
+    <form
+      className="flex items-center gap-1 border border-border-c rounded-xl bg-surface px-2 py-1.5 mb-4 transition-[border-color,box-shadow] duration-100 focus-within:border-brand focus-within:shadow-[0_0_0_3px_var(--brand-soft)]"
+      onSubmit={onSubmit}
+    >
+      <div className="flex items-center gap-0.5 p-0.5 bg-bg-2 rounded-[7px] border border-border-c">
         <button
           type="button"
-          className={mode === 'ask' ? 'is-active' : ''}
+          className={`inline-flex items-center gap-[5px] px-2 py-1 rounded-[5px] text-xs font-medium border-none cursor-pointer transition-[background,color] duration-100 ${
+            mode === 'ask'
+              ? 'bg-surface text-fg shadow-[0_1px_2px_oklch(0_0_0_/_0.06)]'
+              : 'bg-transparent text-fg-muted hover:text-fg'
+          }`}
           onClick={() => setMode('ask')}
         >
           <Sparkles size={12} /> Ask
         </button>
         <button
           type="button"
-          className={mode === 'keyword' ? 'is-active' : ''}
+          className={`inline-flex items-center gap-[5px] px-2 py-1 rounded-[5px] text-xs font-medium border-none cursor-pointer transition-[background,color] duration-100 ${
+            mode === 'keyword'
+              ? 'bg-surface text-fg shadow-[0_1px_2px_oklch(0_0_0_/_0.06)]'
+              : 'bg-transparent text-fg-muted hover:text-fg'
+          }`}
           onClick={() => setMode('keyword')}
         >
           <Search size={12} /> Keyword
@@ -72,7 +83,7 @@ export default function SearchBar() {
       </div>
       <input
         ref={inputRef}
-        className="hn-search-input"
+        className="flex-1 border-none bg-transparent px-2 py-1.5 outline-none text-sm text-inherit placeholder:text-fg-faint"
         placeholder={mode === 'ask' ? 'Ask in plain English…' : 'Search by keyword…'}
         value={value}
         onChange={(e) => setValue(e.target.value)}
@@ -81,7 +92,7 @@ export default function SearchBar() {
       {value && (
         <button
           type="button"
-          className="hn-search-clear"
+          className="w-6 h-6 rounded-[5px] inline-flex items-center justify-center text-fg-muted bg-transparent border-none cursor-pointer hover:text-fg hover:bg-hover"
           onClick={() => {
             setValue('');
             inputRef.current?.focus();

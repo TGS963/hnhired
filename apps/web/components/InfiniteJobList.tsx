@@ -99,35 +99,35 @@ export default function InfiniteJobList({
 
   return (
     <>
-      <div className="hn-filters-meta">
-        <span className="hn-count">
-          <strong>{visible.length}</strong>
+      <div className="flex items-center gap-2 px-1 pt-3.5 pb-[18px] border-b border-border-c text-[12.5px] text-fg">
+        <span>
+          <strong className="font-mono font-medium text-[13px] tracking-[-0.01em]">{visible.length}</strong>
           {total != null && (
             <>
               {' '}
-              <span className="hn-muted">of {total}</span>
+              <span className="text-fg-muted">of {total}</span>
             </>
           )}{' '}
           listings
         </span>
-        <span className="hn-dot-sep">·</span>
-        <span className="hn-muted">{monthStr}</span>
+        <span className="opacity-60">·</span>
+        <span className="text-fg-muted">{monthStr}</span>
         <LayoutToggle initial={layout} onChange={setLayout} />
       </div>
 
       {visible.length === 0 ? (
-        <div className="hn-empty">
-          <div className="hn-empty-title">No matches</div>
-          <div className="hn-muted">Try clearing filters.</div>
+        <div className="py-24 px-5 text-center border border-dashed border-border-c rounded-[12px] mt-5">
+          <div className="text-[15px] font-medium mb-1.5">No matches</div>
+          <div className="text-fg-muted">Try clearing filters.</div>
         </div>
       ) : layout === 'rows' ? (
-        <div className="hn-list">
+        <div className="flex flex-col">
           {visible.map((row) => (
             <JobRow key={String(row.post_raw_id)} row={row} />
           ))}
         </div>
       ) : (
-        <div className="hn-grid">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-3 pt-3">
           {visible.map((row) => (
             <JobCard key={String(row.post_raw_id)} row={row} />
           ))}
@@ -137,21 +137,24 @@ export default function InfiniteJobList({
       {!savedOnly && nextOffset != null && (
         <div
           ref={sentinelRef}
-          className="hn-muted hn-mono"
-          style={{ padding: '24px 0', textAlign: 'center', fontSize: '12px' }}
+          className="text-fg-muted font-mono tracking-[-0.01em] py-6 text-center text-xs"
         >
           {loading ? 'Loading…' : ''}
         </div>
       )}
       {error && (
-        <div style={{ marginTop: 12, textAlign: 'center' }}>
-          <button type="button" className="hn-btn" onClick={loadMore}>
+        <div className="mt-3 text-center">
+          <button
+            type="button"
+            className="inline-flex items-center gap-1.5 px-[14px] py-[7px] border border-border-c rounded-[7px] text-[13px] font-medium text-fg bg-surface cursor-pointer hover:bg-hover hover:border-border-strong active:translate-y-[0.5px] transition-colors duration-100"
+            onClick={loadMore}
+          >
             Retry ({error})
           </button>
         </div>
       )}
       {!savedOnly && nextOffset == null && items.length > 0 && (
-        <div className="hn-muted hn-mono" style={{ padding: '24px 0', textAlign: 'center', fontSize: '12px' }}>
+        <div className="text-fg-muted font-mono tracking-[-0.01em] py-6 text-center text-xs">
           No more results.
         </div>
       )}

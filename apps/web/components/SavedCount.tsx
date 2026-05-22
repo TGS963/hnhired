@@ -28,5 +28,5 @@ export default function SavedCount() {
   }, []);
 
   if (!count) return null;
-  return <span className="hn-pill-count">{count}</span>;
+  return <span className="font-mono text-[10px] bg-brand-soft text-brand px-[5px] py-px rounded-full ml-0.5">{count}</span>;
 }

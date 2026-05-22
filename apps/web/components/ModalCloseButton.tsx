@@ -8,7 +8,7 @@ export default function ModalCloseButton() {
   return (
     <button
       type="button"
-      className="hn-icon-btn"
+      className="inline-flex w-7 h-7 items-center justify-center rounded-md text-fg-muted bg-transparent border-0 cursor-pointer hover:text-fg hover:bg-hover transition-colors duration-100"
       aria-label="Close"
       onClick={() => router.back()}
     >

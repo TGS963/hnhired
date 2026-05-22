@@ -40,22 +40,22 @@ export default function JobCard({
     <Link
       href={`/job/${id}`}
       onClick={markSeen}
-      className={`hn-card${seen ? ' is-seen' : ''}`}
+      className={`bg-surface border border-border-c rounded-xl p-4 flex flex-col gap-2.5 cursor-pointer transition-all duration-150 hover:border-border-strong${seen ? ' opacity-55 hover:opacity-100' : ''}`}
     >
-      <div className="hn-card-head">
+      <div className="flex justify-between items-start gap-2">
         <div>
-          <div className="hn-company">
-            {rank != null && <span className="hn-mono hn-muted">#{rank} </span>}
+          <div className="font-semibold text-[14.5px] tracking-[-0.01em] text-fg">
+            {rank != null && <span className="font-mono tracking-[-0.01em] text-fg-muted">#{rank} </span>}
             {row.company ?? 'Unknown'}
           </div>
-          <div className="hn-muted hn-role">
+          <div className="text-fg-muted text-[13px] font-normal">
             {role}
             {more}
           </div>
         </div>
         <button
           type="button"
-          className={`hn-icon-btn${saved ? ' is-saved' : ''}`}
+          className={`w-7 h-7 rounded-[6px] inline-flex items-center justify-center bg-transparent border-none cursor-pointer transition-colors hover:bg-hover ${saved ? 'text-brand hover:text-brand' : 'text-fg-muted hover:text-fg'}`}
           aria-label={saved ? 'Unsave' : 'Save'}
           onClick={(e) => {
             e.preventDefault();
@@ -66,28 +66,28 @@ export default function JobCard({
           {saved ? <BookmarkCheck size={14} /> : <Bookmark size={14} />}
         </button>
       </div>
-      {row.summary_1line && <p className="hn-card-summary">{row.summary_1line}</p>}
+      {row.summary_1line && <p className="text-[13px] text-fg-muted m-0 leading-normal overflow-hidden [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical]">{row.summary_1line}</p>}
       {why && (
-        <p className="hn-card-summary">
+        <p className="text-[13px] text-fg-muted m-0 leading-normal overflow-hidden [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical]">
           <em>{whyLabel ?? 'why'}:</em> {why}
         </p>
       )}
-      <div className="hn-card-meta">
+      <div className="flex flex-wrap gap-2 text-xs items-center">
         {remote && <span className={`hn-tag-${remote}`}>{remote}</span>}
-        {locs && <span className="hn-muted">{locs}</span>}
-        {sal && <span className="hn-mono hn-sal">{sal}</span>}
+        {locs && <span className="text-fg-muted">{locs}</span>}
+        {sal && <span className="font-mono tracking-[-0.01em] text-[12.5px] text-fg">{sal}</span>}
       </div>
-      <div className="hn-card-foot">
-        <div className="hn-card-stack">
+      <div className="flex justify-between items-end gap-2 border-t border-border-c pt-2.5 mt-1">
+        <div className="flex flex-wrap gap-1">
           {techShown.map((t) => (
-            <span key={t} className="hn-tech">
+            <span key={t} className="font-mono text-[11px] px-1.5 py-0.5 bg-tag-bg text-tag-fg rounded-[4px] tracking-normal font-normal whitespace-nowrap">
               {t}
             </span>
           ))}
-          {techMore > 0 && <span className="hn-tech">+{techMore}</span>}
+          {techMore > 0 && <span className="font-mono text-[11px] px-1.5 py-0.5 bg-tag-bg text-tag-fg rounded-[4px] tracking-normal font-normal whitespace-nowrap">+{techMore}</span>}
         </div>
-        <div className="hn-card-side">
-          <span className="hn-mono hn-muted hn-time">{relativeTime(row.posted_at)}</span>
+        <div className="flex flex-col items-end gap-1 text-xs shrink-0">
+          <span className="font-mono tracking-[-0.01em] text-xs text-fg-muted">{relativeTime(row.posted_at)}</span>
         </div>
       </div>
     </Link>

@@ -26,6 +26,15 @@ type DraftState =
   | { status: 'error'; message: string }
   | { status: 'done'; subject: string; body: string; to?: string | null; apply_url?: string | null };
 
+const BTN_BASE =
+  'inline-flex items-center gap-1.5 px-[14px] py-[7px] border border-border-c rounded-[7px] text-[13px] font-medium text-fg bg-surface cursor-pointer hover:bg-hover hover:border-border-strong active:translate-y-[0.5px] disabled:opacity-50 disabled:cursor-not-allowed transition-colors';
+const BTN_PRIMARY =
+  'inline-flex items-center gap-1.5 px-[14px] py-[7px] border border-brand rounded-[7px] text-[13px] font-medium text-brand-contrast bg-brand cursor-pointer hover:bg-brand-hover hover:border-brand-hover active:translate-y-[0.5px] disabled:opacity-50 disabled:cursor-not-allowed transition-colors';
+const TEXTAREA_CLS =
+  'w-full bg-surface border border-border-c rounded-xl px-4 py-3.5 font-mono text-[12.5px] leading-[1.6] text-fg outline-none resize-y transition-colors focus:border-brand focus:shadow-[0_0_0_3px_var(--brand-soft)] placeholder:text-fg-faint';
+const SUMMARY_TAG_CLS =
+  'inline-flex items-center gap-[5px] font-mono text-[10.5px] uppercase tracking-[0.05em] text-brand mb-1.5';
+
 export default function DraftPanel({
   postRawId,
 }: {
@@ -126,28 +135,12 @@ export default function DraftPanel({
   }
 
   return (
-    <section
-      style={{
-        marginTop: 32,
-        padding: 20,
-        background: 'var(--bg-2)',
-        borderRadius: 10,
-        border: '1px solid var(--border-c)',
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'baseline',
-          justifyContent: 'space-between',
-          gap: 16,
-          marginBottom: 16,
-        }}
-      >
-        <div className="hn-detail-summary-tag" style={{ marginBottom: 0 }}>
+    <section className="mt-8 p-5 bg-bg-2 border border-border-c rounded-xl">
+      <div className="flex items-baseline justify-between gap-4 mb-4">
+        <div className={`${SUMMARY_TAG_CLS} mb-0`}>
           ◇ Draft outreach
         </div>
-        {hasResume && <span className="hn-muted" style={{ fontSize: 12 }}>Résumé saved locally</span>}
+        {hasResume && <span className="text-fg-muted text-xs">Résumé saved locally</span>}
       </div>
       <div className="space-y-4">
         {!hasResume ? (
@@ -171,11 +164,7 @@ export default function DraftPanel({
                   <Label
                     key={s.id}
                     htmlFor={`style-${s.id}`}
-                    className="flex cursor-pointer items-start gap-2 rounded-md p-3 text-sm"
-                    style={{
-                      border: `1px solid ${style === s.id ? 'var(--brand)' : 'var(--border-c)'}`,
-                      background: style === s.id ? 'var(--brand-soft)' : 'var(--surface)',
-                    }}
+                    className={`flex cursor-pointer items-start gap-2 rounded-md p-3 text-sm border ${style === s.id ? 'border-brand bg-brand-soft' : 'border-border-c bg-surface hover:bg-hover'}`}
                   >
                     <RadioGroupItem value={s.id} id={`style-${s.id}`} className="mt-1" />
                     <div className="flex flex-col">
@@ -192,13 +181,13 @@ export default function DraftPanel({
                 <Label htmlFor="custom-instr">Custom instructions</Label>
                 <textarea
                   id="custom-instr"
-                  className="hn-textarea"
+                  className={TEXTAREA_CLS}
                   value={customInstructions}
                   onChange={(e) => setCustomInstructions(e.target.value)}
                   rows={4}
                   placeholder="e.g. write it as if i'm applying with a friend and we want to job-share"
                 />
-                <p className="hn-muted" style={{ fontSize: 12 }}>
+                <p className="text-fg-muted text-xs">
                   The AI uses these instructions plus the job posting and your résumé as context.
                 </p>
               </div>
@@ -207,25 +196,22 @@ export default function DraftPanel({
             <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
-                className="hn-btn hn-btn-primary"
+                className={BTN_PRIMARY}
                 onClick={generate}
                 disabled={!canDraft}
               >
                 {draft.status === 'loading' ? 'Drafting…' : 'Draft email'}
               </button>
               {draft.status === 'done' && (
-                <button type="button" className="hn-btn" onClick={generate} disabled={!canDraft}>
+                <button type="button" className={BTN_BASE} onClick={generate} disabled={!canDraft}>
                   Regenerate
                 </button>
               )}
             </div>
 
             {draft.status === 'error' && (
-              <div
-                className="hn-detail-summary"
-                style={{ borderLeftColor: 'var(--destructive)' }}
-              >
-                <span className="hn-detail-summary-tag" style={{ color: 'var(--destructive)' }}>
+              <div className="relative bg-bg-2 border-l-2 border-destructive my-0 mb-6 px-5 py-4 rounded-r-lg">
+                <span className="inline-flex items-center gap-[5px] font-mono text-[10.5px] uppercase tracking-[0.05em] text-destructive mb-1.5">
                   Error
                 </span>
                 <p>{draft.message}</p>
@@ -233,20 +219,11 @@ export default function DraftPanel({
             )}
 
             {draft.status === 'done' && (
-              <div
-                style={{
-                  background: 'var(--surface)',
-                  border: '1px solid var(--border-c)',
-                  borderRadius: 10,
-                  padding: 16,
-                }}
-                className="space-y-3 text-sm"
-              >
-                <div className="flex flex-wrap gap-3" style={{ fontSize: 12 }}>
+              <div className="space-y-3 text-sm bg-surface border border-border-c rounded-xl p-4">
+                <div className="flex flex-wrap gap-3 text-xs">
                   {draft.to && (
                     <a
-                      className="hn-muted"
-                      style={{ textDecoration: 'underline' }}
+                      className="text-fg-muted underline"
                       href={`mailto:${draft.to}?subject=${encodeURIComponent(
                         draft.subject,
                       )}&body=${encodeURIComponent(draft.body)}`}
@@ -256,8 +233,7 @@ export default function DraftPanel({
                   )}
                   {draft.apply_url && (
                     <a
-                      className="hn-muted"
-                      style={{ textDecoration: 'underline' }}
+                      className="text-fg-muted underline"
                       href={draft.apply_url}
                       target="_blank"
                       rel="noreferrer"
@@ -267,28 +243,27 @@ export default function DraftPanel({
                   )}
                 </div>
                 <div>
-                  <div className="hn-detail-summary-tag" style={{ marginBottom: 4 }}>
+                  <div className={`${SUMMARY_TAG_CLS.replace('mb-1.5', '')} mb-1`}>
                     Subject
                   </div>
                   <p>{draft.subject}</p>
                 </div>
                 <div>
-                  <div className="hn-detail-summary-tag" style={{ marginBottom: 4 }}>
+                  <div className={`${SUMMARY_TAG_CLS.replace('mb-1.5', '')} mb-1`}>
                     Body
                   </div>
                   <textarea
                     readOnly
                     value={draft.body}
                     rows={Math.min(20, Math.max(8, draft.body.split('\n').length + 2))}
-                    className="hn-textarea"
-                    style={{ marginTop: 4 }}
+                    className={`${TEXTAREA_CLS} mt-1`}
                   />
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <button type="button" className="hn-btn" onClick={copyAll}>
+                  <button type="button" className={BTN_BASE} onClick={copyAll}>
                     {copied === 'all' ? 'Copied' : 'Copy subject + body'}
                   </button>
-                  <button type="button" className="hn-btn" onClick={copyResume}>
+                  <button type="button" className={BTN_BASE} onClick={copyResume}>
                     {copied === 'resume' ? 'Copied' : 'Copy résumé text'}
                   </button>
                 </div>

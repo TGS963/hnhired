@@ -48,12 +48,12 @@ export default async function Page({
         <SearchBar />
         <FilterBar defaultValues={params} />
         {results.length === 0 ? (
-          <div className="hn-empty">
-            <div className="hn-empty-title">No matches</div>
-            <div className="hn-muted">Try a different query.</div>
+          <div className="px-5 py-24 text-center border border-dashed border-border-c rounded-2xl mt-5">
+            <div className="text-[15px] font-medium mb-1.5">No matches</div>
+            <div className="text-fg-muted">Try a different query.</div>
           </div>
         ) : (
-          <div className="hn-list">
+          <div className="flex flex-col">
             {results.map((row) => (
               <JobRow
                 key={String(row.post_raw_id)}

@@ -93,24 +93,33 @@ export default function JobDetail({
     identifier: { '@type': 'PropertyValue', name: 'HN', value: String(postRawId) },
   };
 
+  const btnBase =
+    'inline-flex items-center gap-1.5 px-[14px] py-[7px] rounded-[7px] border border-border-c text-sm font-medium text-fg bg-surface hover:bg-hover hover:border-border-strong active:translate-y-[0.5px] transition-all duration-100 disabled:opacity-50 disabled:cursor-not-allowed';
+  const btnPrimary =
+    'bg-brand text-brand-contrast border-brand hover:bg-brand-hover hover:border-brand-hover';
+  const fieldDt =
+    'font-mono text-[10.5px] uppercase tracking-[0.06em] text-fg-faint pt-0.5';
+  const fieldDd = 'm-0 text-[13.5px] text-fg flex items-center gap-1.5 flex-wrap';
+  const monoSpan = 'font-mono';
+
   const body = (
     <>
-      <header className="hn-detail-head">
-        <h1 className="hn-detail-company">{p.company ?? 'Unknown company'}</h1>
-        {role && <p className="hn-detail-role">{role}</p>}
+      <header className="mb-6">
+        <h1 className="text-[28px] font-semibold tracking-[-0.02em] m-0 mb-1.5 leading-[1.2]">{p.company ?? 'Unknown company'}</h1>
+        {role && <p className="text-[15px] text-fg-muted m-0">{role}</p>}
       </header>
 
       {p.summary_1line && (
-        <aside className="hn-detail-summary">
-          <span className="hn-detail-summary-tag">◇ AI summary</span>
-          <p>{p.summary_1line}</p>
+        <aside className="relative bg-bg-2 border-l-2 border-brand m-0 mb-6 px-5 py-4 rounded-r-lg">
+          <span className="inline-flex items-center gap-[5px] font-mono text-[10.5px] uppercase tracking-[0.05em] text-brand mb-1.5">◇ AI summary</span>
+          <p className="m-0 text-[15px] leading-[1.55] text-fg">{p.summary_1line}</p>
         </aside>
       )}
 
-      <div className="hn-detail-actions">
+      <div className="flex gap-2 flex-wrap mb-8">
         {p.apply_url && (
           <a
-            className="hn-btn hn-btn-primary"
+            className={`${btnBase} ${btnPrimary}`}
             href={p.apply_url}
             target="_blank"
             rel="noopener noreferrer"
@@ -119,12 +128,12 @@ export default function JobDetail({
           </a>
         )}
         {p.apply_email && (
-          <a className="hn-btn" href={`mailto:${p.apply_email}`}>
+          <a className={btnBase} href={`mailto:${p.apply_email}`}>
             Email
           </a>
         )}
         <a
-          className="hn-btn"
+          className={btnBase}
           href={`https://news.ycombinator.com/item?id=${postRawId}`}
           target="_blank"
           rel="noopener noreferrer"
@@ -133,60 +142,60 @@ export default function JobDetail({
         </a>
       </div>
 
-      <dl className="hn-detail-grid">
+      <dl className="grid grid-cols-[110px_1fr] gap-x-4 gap-y-[14px] my-0 mb-8 py-5 border-y border-border-c">
         {locations && (
-          <div className="hn-field">
-            <dt>Location</dt>
-            <dd>{locations}</dd>
+          <div className="contents">
+            <dt className={fieldDt}>Location</dt>
+            <dd className={fieldDd}>{locations}</dd>
           </div>
         )}
         {p.remote_policy && (
-          <div className="hn-field">
-            <dt>Remote</dt>
-            <dd>
+          <div className="contents">
+            <dt className={fieldDt}>Remote</dt>
+            <dd className={fieldDd}>
               <span className={`hn-tag-${p.remote_policy}`}>{p.remote_policy}</span>
             </dd>
           </div>
         )}
         {salary && (
-          <div className="hn-field">
-            <dt>Comp</dt>
-            <dd>
-              <span className="hn-mono">{salary}</span>
+          <div className="contents">
+            <dt className={fieldDt}>Comp</dt>
+            <dd className={fieldDd}>
+              <span className={monoSpan}>{salary}</span>
             </dd>
           </div>
         )}
         {(p.equity === true || p.equity === false) && (
-          <div className="hn-field">
-            <dt>Equity</dt>
-            <dd>{p.equity ? 'Yes' : 'No'}</dd>
+          <div className="contents">
+            <dt className={fieldDt}>Equity</dt>
+            <dd className={fieldDd}>{p.equity ? 'Yes' : 'No'}</dd>
           </div>
         )}
         {(p.visa_sponsorship === true || p.visa_sponsorship === false) && (
-          <div className="hn-field">
-            <dt>Visa</dt>
-            <dd>{p.visa_sponsorship ? 'Yes' : 'No'}</dd>
+          <div className="contents">
+            <dt className={fieldDt}>Visa</dt>
+            <dd className={fieldDd}>{p.visa_sponsorship ? 'Yes' : 'No'}</dd>
           </div>
         )}
         {p.contract_type && (
-          <div className="hn-field">
-            <dt>Type</dt>
-            <dd>{p.contract_type}</dd>
+          <div className="contents">
+            <dt className={fieldDt}>Type</dt>
+            <dd className={fieldDd}>{p.contract_type}</dd>
           </div>
         )}
         {seniority.length > 0 && (
-          <div className="hn-field">
-            <dt>Seniority</dt>
-            <dd>{seniority.join(' · ')}</dd>
+          <div className="contents">
+            <dt className={fieldDt}>Seniority</dt>
+            <dd className={fieldDd}>{seniority.join(' · ')}</dd>
           </div>
         )}
         {techStack.length > 0 && (
-          <div className="hn-field">
-            <dt>Stack</dt>
-            <dd>
-              <div className="hn-detail-stack">
+          <div className="contents">
+            <dt className={fieldDt}>Stack</dt>
+            <dd className={fieldDd}>
+              <div className="flex flex-wrap gap-1">
                 {techStack.map((t) => (
-                  <span key={t} className="hn-tech">
+                  <span key={t} className="font-mono text-[11px] px-1.5 py-0.5 bg-tag-bg text-tag-fg rounded-[4px] font-normal whitespace-nowrap">
                     {t}
                   </span>
                 ))}
@@ -195,22 +204,22 @@ export default function JobDetail({
           </div>
         )}
         {posted && (
-          <div className="hn-field">
-            <dt>Posted</dt>
-            <dd>
-              <span className="hn-mono">{posted}</span>
+          <div className="contents">
+            <dt className={fieldDt}>Posted</dt>
+            <dd className={fieldDd}>
+              <span className={monoSpan}>{posted}</span>
             </dd>
           </div>
         )}
       </dl>
 
       {p.raw_text && (
-        <details className="hn-detail-raw" open>
-          <summary className="hn-detail-raw-toggle">
+        <details className="mt-3" open>
+          <summary className="w-full flex items-center justify-between py-2.5 text-fg-muted text-[13px] border-y border-border-c bg-transparent cursor-pointer hover:text-fg">
             <span>Original HN comment</span>
-            <span className="hn-mono hn-detail-raw-hint">collapse</span>
+            <span className="font-mono text-fg-faint text-[11px]">collapse</span>
           </summary>
-          <pre className="hn-detail-raw-text">{p.raw_text}</pre>
+          <pre className="mt-3 mb-0 px-5 py-4 bg-bg-2 rounded-lg font-sans text-[13px] leading-[1.55] text-fg-muted whitespace-pre-wrap break-words">{p.raw_text}</pre>
         </details>
       )}
 
@@ -229,24 +238,30 @@ export default function JobDetail({
   if (variant === 'modal') {
     return (
       <>
-        <div className="hn-detail-bar">
+        <div className="flex items-center justify-between h-14 pl-3 pr-4 border-b border-border-c flex-shrink-0">
           <ModalCloseButton />
-          <div className="hn-detail-bar-tools">
-            <a href={`/job/${postRawId}`} className="hn-link">
+          <div className="flex items-center gap-2.5">
+            <a
+              href={`/job/${postRawId}`}
+              className="inline-flex items-center gap-1.5 text-fg-muted text-[13px] hover:text-fg transition-colors duration-100"
+            >
               Open full page
             </a>
           </div>
         </div>
-        <div className="hn-detail-body">
-          <div className="hn-detail-wrap">{body}</div>
+        <div className="flex-1 overflow-y-auto px-8 pt-6 pb-20 max-[720px]:px-4 max-[720px]:pb-16">
+          <div className="max-w-[720px] mx-auto">{body}</div>
         </div>
       </>
     );
   }
 
   return (
-    <div className="hn-detail-wrap">
-      <Link href="/" className="hn-back">
+    <div className="max-w-[720px] mx-auto">
+      <Link
+        href="/"
+        className="inline-flex items-center gap-1.5 font-mono text-[12.5px] text-fg-muted tracking-[-0.01em] mb-6 hover:text-fg transition-colors duration-100"
+      >
         <span aria-hidden>←</span> Back
       </Link>
       {body}

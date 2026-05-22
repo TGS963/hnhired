@@ -138,42 +138,42 @@ export default function JobRow({
     <Link
       href={`/job/${id}`}
       onClick={markSeen}
-      className={`hn-row${seen ? ' is-seen' : ''}`}
+      className={`grid grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,0.9fr)_auto] gap-5 px-2 py-4 items-center border-b border-row-divider cursor-pointer transition-colors hover:bg-hover${seen ? ' opacity-55 hover:opacity-100' : ''}`}
     >
-      <div className="hn-row-main">
-        <div className="hn-row-title">
-          {rank != null && <span className="hn-mono hn-muted">#{rank}</span>}
-          <span className="hn-company">{row.company ?? 'Unknown'}</span>
-          <span className="hn-muted hn-role">
+      <div className="min-w-0">
+        <div className="flex items-baseline gap-2.5 mb-1 flex-wrap">
+          {rank != null && <span className="font-mono tracking-[-0.01em] text-fg-muted">#{rank}</span>}
+          <span className="font-semibold text-[14.5px] tracking-[-0.01em] text-fg">{row.company ?? 'Unknown'}</span>
+          <span className="text-fg-muted text-[13px] font-normal">
             {role}
             {more}
           </span>
         </div>
-        {row.summary_1line && <div className="hn-row-summary">{row.summary_1line}</div>}
+        {row.summary_1line && <div className="text-[13px] text-fg-muted overflow-hidden [display:-webkit-box] [-webkit-line-clamp:1] [-webkit-box-orient:vertical]">{row.summary_1line}</div>}
         {why && (
-          <div className="hn-row-summary">
+          <div className="text-[13px] text-fg-muted overflow-hidden [display:-webkit-box] [-webkit-line-clamp:1] [-webkit-box-orient:vertical]">
             <em>{whyLabel ?? 'why'}:</em> {why}
           </div>
         )}
       </div>
-      <div className="hn-row-meta">
+      <div className="flex items-center gap-2 flex-wrap text-[12.5px] min-w-0 text-fg-muted">
         {remote && <span className={`hn-tag-${remote}`}>{remote}</span>}
-        {locs && <span className="hn-muted">{locs}</span>}
-        {sal && <span className="hn-mono hn-sal">{sal}</span>}
+        {locs && <span className="text-fg-muted">{locs}</span>}
+        {sal && <span className="font-mono tracking-[-0.01em] text-[12.5px] text-fg">{sal}</span>}
       </div>
-      <div className="hn-row-stack">
+      <div className="flex items-center gap-1 flex-wrap min-w-0">
         {techShown.map((t) => (
-          <span key={t} className="hn-tech">
+          <span key={t} className="font-mono text-[11px] px-1.5 py-0.5 bg-tag-bg text-tag-fg rounded-[4px] tracking-normal font-normal whitespace-nowrap">
             {t}
           </span>
         ))}
-        {techMore > 0 && <span className="hn-tech">+{techMore}</span>}
+        {techMore > 0 && <span className="font-mono text-[11px] px-1.5 py-0.5 bg-tag-bg text-tag-fg rounded-[4px] tracking-normal font-normal whitespace-nowrap">+{techMore}</span>}
       </div>
-      <div className="hn-row-side">
-        <span className="hn-mono hn-muted hn-time">{relativeTime(row.posted_at)}</span>
+      <div className="flex items-center gap-2.5 justify-self-end">
+        <span className="font-mono tracking-[-0.01em] text-xs text-fg-muted">{relativeTime(row.posted_at)}</span>
         <button
           type="button"
-          className={`hn-icon-btn${saved ? ' is-saved' : ''}`}
+          className={`w-7 h-7 rounded-[6px] inline-flex items-center justify-center bg-transparent border-none cursor-pointer transition-colors hover:bg-hover ${saved ? 'text-brand hover:text-brand' : 'text-fg-muted hover:text-fg'}`}
           aria-label={saved ? 'Unsave' : 'Save'}
           onClick={(e) => {
             e.preventDefault();
