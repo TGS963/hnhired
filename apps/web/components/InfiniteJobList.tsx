@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import JobRow, { type JobCardRow } from './JobRow';
 import JobCard from './JobCard';
+import JobRowSkeleton from './JobRowSkeleton';
+import JobCardSkeleton from './JobCardSkeleton';
 import LayoutToggle, { type Layout } from './LayoutToggle';
 
 type Props = {
@@ -139,48 +141,11 @@ export default function InfiniteJobList({
           {loading ? (
             layout === 'rows' ? (
               <div className="flex flex-col">
-                {[0, 1, 2].map((i) => (
-                  <div
-                    key={i}
-                    className="grid grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,0.9fr)_auto] gap-5 px-2 py-4 border-b border-row-divider animate-pulse"
-                  >
-                    <div className="min-w-0 space-y-1.5">
-                      <div className="h-3.5 w-2/3 rounded-[3px] bg-bg-2" />
-                      <div className="h-3 w-4/5 rounded-[3px] bg-bg-2" />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="h-4 w-14 rounded-[4px] bg-bg-2" />
-                      <div className="h-3 w-20 rounded-[3px] bg-bg-2" />
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <div className="h-4 w-10 rounded-[4px] bg-bg-2" />
-                      <div className="h-4 w-10 rounded-[4px] bg-bg-2" />
-                      <div className="h-4 w-10 rounded-[4px] bg-bg-2" />
-                    </div>
-                    <div className="flex items-center justify-self-end gap-2.5">
-                      <div className="h-3 w-8 rounded-[3px] bg-bg-2" />
-                      <div className="h-4 w-4 rounded-full bg-bg-2" />
-                    </div>
-                  </div>
-                ))}
+                {[0, 1, 2].map((i) => <JobRowSkeleton key={i} />)}
               </div>
             ) : (
               <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-3 pt-3">
-                {[0, 1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    className="bg-surface border border-border-c rounded-xl p-4 flex flex-col gap-2.5 animate-pulse"
-                  >
-                    <div className="h-4 w-1/2 rounded-[3px] bg-bg-2" />
-                    <div className="h-3 w-3/4 rounded-[3px] bg-bg-2" />
-                    <div className="h-3 w-full rounded-[3px] bg-bg-2" />
-                    <div className="flex gap-1.5 pt-1">
-                      <div className="h-4 w-10 rounded-[4px] bg-bg-2" />
-                      <div className="h-4 w-12 rounded-[4px] bg-bg-2" />
-                      <div className="h-4 w-8 rounded-[4px] bg-bg-2" />
-                    </div>
-                  </div>
-                ))}
+                {[0, 1, 2, 3].map((i) => <JobCardSkeleton key={i} />)}
               </div>
             )
           ) : (
