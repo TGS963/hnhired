@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import { nlSearch } from '@/lib/search';
-import { browse, BROWSE_PAGE_SIZE } from '@/lib/queries';
+import { browse, browseCount, BROWSE_PAGE_SIZE } from '@/lib/queries';
 import SearchBar from '@/components/SearchBar';
 import FilterBar from '@/components/FilterBar';
 import InfiniteJobList from '@/components/InfiniteJobList';
@@ -79,7 +79,10 @@ export default async function Page({
   }
 
   const savedOnly = params.saved === '1';
-  const initial = (await browse(usp, { limit: BROWSE_PAGE_SIZE, offset: 0 })) as JobCardRow[];
+  const [initial, total] = await Promise.all([
+    browse(usp, { limit: BROWSE_PAGE_SIZE, offset: 0 }) as Promise<JobCardRow[]>,
+    browseCount(usp),
+  ]);
   const initialNextOffset = initial.length === BROWSE_PAGE_SIZE ? BROWSE_PAGE_SIZE : null;
 
   return (
@@ -92,6 +95,7 @@ export default async function Page({
         filters={filters}
         initialLayout={initialLayout}
         savedOnly={savedOnly}
+        total={total}
       />
     </>
   );

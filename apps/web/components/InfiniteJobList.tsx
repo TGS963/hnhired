@@ -96,24 +96,15 @@ export default function InfiniteJobList({
     return list;
   }, [items, savedOnly, savedIds, hideSeen, seenIds]);
 
-  const now = new Date();
-  const monthStr = now.toLocaleString(undefined, { month: 'long', year: 'numeric' });
+  const displayTotal = savedOnly ? savedIds.size : (total ?? visible.length);
 
   return (
     <>
       <div className="flex items-center gap-2 px-1 pt-3.5 pb-[18px] border-b border-border-c text-[12.5px] text-fg">
         <span>
-          <strong className="font-mono font-medium text-[13px] tracking-[-0.01em]">{visible.length}</strong>
-          {total != null && (
-            <>
-              {' '}
-              <span className="text-fg-muted">of {total}</span>
-            </>
-          )}{' '}
+          <strong className="font-mono font-medium text-[13px] tracking-[-0.01em]">{displayTotal}</strong>{' '}
           listings
         </span>
-        <span className="opacity-60">·</span>
-        <span className="text-fg-muted">{monthStr}</span>
         <LayoutToggle initial={layout} onChange={setLayout} />
       </div>
 

@@ -6,12 +6,7 @@ const CONTRACT_TYPES = new Set(['fulltime', 'parttime', 'contract', 'intern']);
 
 export const BROWSE_PAGE_SIZE = 30;
 
-export async function browse(
-  params: URLSearchParams,
-  opts: { limit?: number; offset?: number } = {},
-): Promise<Post[]> {
-  const limit = Math.max(1, Math.min(opts.limit ?? BROWSE_PAGE_SIZE, 100));
-  const offset = Math.max(0, opts.offset ?? 0);
+function buildWhere(params: URLSearchParams): { where: string[]; vals: any[] } {
   const where: string[] = [];
   const vals: any[] = [];
   const bind = (v: any) => {
@@ -50,9 +45,19 @@ export async function browse(
         break;
     }
   }
+  return { where, vals };
+}
 
-  const limitBind = bind(limit);
-  const offsetBind = bind(offset);
+export async function browse(
+  params: URLSearchParams,
+  opts: { limit?: number; offset?: number } = {},
+): Promise<Post[]> {
+  const limit = Math.max(1, Math.min(opts.limit ?? BROWSE_PAGE_SIZE, 100));
+  const offset = Math.max(0, opts.offset ?? 0);
+  const { where, vals } = buildWhere(params);
+  vals.push(limit, offset);
+  const limitBind = `$${vals.length - 1}`;
+  const offsetBind = `$${vals.length}`;
   const sql = `
     SELECT * FROM posts
     ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
@@ -60,4 +65,14 @@ export async function browse(
     LIMIT ${limitBind} OFFSET ${offsetBind}
   `;
   return query<Post>(sql, vals);
+}
+
+export async function browseCount(params: URLSearchParams): Promise<number> {
+  const { where, vals } = buildWhere(params);
+  const sql = `
+    SELECT COUNT(*)::int AS n FROM posts
+    ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
+  `;
+  const rows = await query<{ n: number }>(sql, vals);
+  return rows[0]?.n ?? 0;
 }
