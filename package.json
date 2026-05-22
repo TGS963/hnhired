@@ -6,7 +6,7 @@
     "ingest": "npm run -w @hnhired/ingest start",
     "web:dev": "npm run -w @hnhired/web dev",
     "web:build": "npm run -w @hnhired/web build",
-    "db:migrate": "node --env-file=.env scripts/migrate.mjs"
+    "db:migrate": "node --env-file-if-exists=.env scripts/migrate.mjs"
   },
   "dependencies": {
     "pg": "^8.13.0"
