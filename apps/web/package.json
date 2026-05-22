@@ -1,0 +1,31 @@
+{
+  "name": "@hnhired/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start -p 3000",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "next": "^15",
+    "react": "^18",
+    "react-dom": "^18",
+    "pg": "^8.13",
+    "@google/genai": "latest",
+    "zod": "^3",
+    "lucide-react": "*"
+  },
+  "devDependencies": {
+    "typescript": "*",
+    "@types/node": "*",
+    "@types/react": "*",
+    "@types/react-dom": "*",
+    "@types/pg": "*",
+    "tailwindcss": "^4",
+    "@tailwindcss/postcss": "^4",
+    "postcss": "*"
+  }
+}

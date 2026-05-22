@@ -1,0 +1,17 @@
+{
+  "name": "@hnhired/ingest",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx --env-file=../../.env src/run.ts"
+  },
+  "dependencies": {
+    "pg": "^8.13.0",
+    "@google/genai": "^0.7.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0"
+  }
+}
