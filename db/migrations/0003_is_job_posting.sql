@@ -7,7 +7,8 @@ ALTER TABLE posts_extractions
 CREATE INDEX IF NOT EXISTS posts_ext_is_job_idx
   ON posts_extractions (is_job_posting);
 
-CREATE OR REPLACE VIEW posts AS
+DROP VIEW IF EXISTS posts;
+CREATE VIEW posts AS
 SELECT DISTINCT ON (e.post_raw_id)
   e.*,
   r.story_id,
