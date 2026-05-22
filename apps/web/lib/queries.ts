@@ -4,7 +4,14 @@ import type { Post } from './schemas';
 const ALLOWED = new Set(['remote', 'loc', 'seniority', 'tech', 'comp_min', 'q', 'contract']);
 const CONTRACT_TYPES = new Set(['fulltime', 'parttime', 'contract', 'intern']);
 
-export async function browse(params: URLSearchParams): Promise<Post[]> {
+export const BROWSE_PAGE_SIZE = 30;
+
+export async function browse(
+  params: URLSearchParams,
+  opts: { limit?: number; offset?: number } = {},
+): Promise<Post[]> {
+  const limit = Math.max(1, Math.min(opts.limit ?? BROWSE_PAGE_SIZE, 100));
+  const offset = Math.max(0, opts.offset ?? 0);
   const where: string[] = [];
   const vals: any[] = [];
   const bind = (v: any) => {
@@ -44,11 +51,13 @@ export async function browse(params: URLSearchParams): Promise<Post[]> {
     }
   }
 
+  const limitBind = bind(limit);
+  const offsetBind = bind(offset);
   const sql = `
     SELECT * FROM posts
     ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
-    ORDER BY posted_at DESC
-    LIMIT 100
+    ORDER BY posted_at DESC, post_raw_id DESC
+    LIMIT ${limitBind} OFFSET ${offsetBind}
   `;
   return query<Post>(sql, vals);
 }
