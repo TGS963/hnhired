@@ -6,7 +6,7 @@ if (!apiKey) throw new Error('GOOGLE_API_KEY required');
 
 const ai = new GoogleGenAI({ apiKey });
 
-const EXTRACT_MODEL = 'gemini-2.5-flash-lite';
+const EXTRACT_MODEL = 'gemini-3.5-flash';
 const EMBED_MODEL = 'gemini-embedding-001';
 const EMBED_DIM = 1024;
 
@@ -70,42 +70,21 @@ const responseSchema = {
   ],
 };
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
-const MAX_ATTEMPTS = 6;
-
 export async function extractStructured(text: string): Promise<Extraction> {
-  let lastErr: any;
-  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-    try {
-      const res = await ai.models.generateContent({
-        model: EXTRACT_MODEL,
-        contents: [{ role: 'user', parts: [{ text }] }],
-        config: {
-          systemInstruction: SYSTEM,
-          responseMimeType: 'application/json',
-          responseSchema,
-          temperature: 0,
-        },
-      });
-      const raw = res.text;
-      if (!raw) throw new Error('empty gemini response');
-      const parsed = JSON.parse(raw);
-      return ExtractionSchema.parse(parsed);
-    } catch (e: any) {
-      lastErr = e;
-      const msg = String(e?.message ?? e);
-      const isRateLimit = msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED') || msg.includes('quota');
-      // Rate limits get a longer backoff; all other errors (network, parse, empty) also retry
-      const baseDelay = isRateLimit ? 8000 : 2000;
-      const waitMs = baseDelay * Math.pow(2, attempt);
-      if (attempt < MAX_ATTEMPTS - 1) {
-        console.warn(`[attempt ${attempt + 1}/${MAX_ATTEMPTS}] error: ${msg.slice(0, 120)} — retrying in ${waitMs}ms...`);
-        await sleep(waitMs);
-      }
-    }
-  }
-  throw lastErr ?? new Error('exhausted retries');
+  const res = await ai.models.generateContent({
+    model: EXTRACT_MODEL,
+    contents: [{ role: 'user', parts: [{ text }] }],
+    config: {
+      systemInstruction: SYSTEM,
+      responseMimeType: 'application/json',
+      responseSchema,
+      temperature: 0,
+    },
+  });
+  const raw = res.text;
+  if (!raw) throw new Error('empty gemini response');
+  const parsed = JSON.parse(raw);
+  return ExtractionSchema.parse(parsed);
 }
 
 export async function embedText(text: string): Promise<number[]> {
