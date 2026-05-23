@@ -6,7 +6,7 @@ export const ai: GoogleGenAI =
   g.__genai ??
   (g.__genai = new GoogleGenAI({ apiKey: process.env.GOOGLE_API_KEY }));
 
-export const MODEL_NL = 'gemini-3.1-pro-preview';
+export const MODEL_NL = 'gemini-3.5-flash';
 export const MODEL_EMBED = 'gemini-embedding-001';
 export const EMBED_DIM = 1024;
 
