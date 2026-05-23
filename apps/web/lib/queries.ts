@@ -2,18 +2,14 @@ import { query } from './db';
 import { FILTER_KEYS } from './filter-keys';
 import type { Post } from './schemas';
 
-const ALLOWED = new Set<string>([...FILTER_KEYS, 'q', 'nl']);
+const SQL_KEYS = FILTER_KEYS.filter((k) => k !== 'saved');
+const ALLOWED = new Set<string>([...SQL_KEYS, 'q']);
 const CONTRACT_TYPES = new Set(['fulltime', 'parttime', 'contract', 'intern']);
 
 export const BROWSE_PAGE_SIZE = 30;
 
-/**
- * buildWhere returns:
- *  - where: SQL WHERE clauses
- *  - vals: bound parameter values
- *  - multiKeywordRankExpr: optional ORDER BY expression for multi-keyword AND-before-OR ranking.
- *    Uses the same $N placeholders already bound in WHERE — no double-binding needed.
- */
+const escapeLike = (s: string) => s.replace(/[\\%_]/g, (m) => `\\${m}`);
+
 function buildWhere(params: URLSearchParams): {
   where: string[];
   vals: any[];
@@ -52,24 +48,27 @@ function buildWhere(params: URLSearchParams): {
         break;
       }
       case 'q': {
-        const terms = raw.split(',').map((s) => s.trim()).filter(Boolean);
-        // Guard: q=',' or q=' , ,' produces no terms — skip to avoid invalid SQL
+        if (raw.length > 200) break;
+        const seen = new Set<string>();
+        const terms: string[] = [];
+        for (const t of raw.split(',').map((s) => s.trim()).filter((s) => s.length >= 2 && s.length <= 64)) {
+          const k = t.toLowerCase();
+          if (seen.has(k)) continue;
+          seen.add(k);
+          terms.push(escapeLike(t));
+          if (terms.length >= 8) break;
+        }
         if (terms.length === 0) break;
         if (terms.length === 1) {
-          // Single term: simple ILIKE, no ranking needed
-          where.push(`raw_text ILIKE '%' || ${bind(terms[0])} || '%'`);
+          where.push(`raw_text ILIKE '%' || ${bind(terms[0])} || '%' ESCAPE '\\'`);
         } else {
-          // Multi-term: OR filter in WHERE, rank by how many terms match.
-          // We bind each term once here; the same $N refs are reused in ORDER BY.
           const termBinds = terms.map((t) => bind(t));
-          const ilikeClauses = termBinds.map((b) => `raw_text ILIKE '%' || ${b} || '%'`);
-
-          // WHERE: any term must match (OR)
-          where.push(`(${ilikeClauses.join(' OR ')})`);
-
-          // ORDER BY rank expression: sum of individual CASE hits (AND matches = higher score)
-          const rankCases = termBinds.map((b) => `(CASE WHEN raw_text ILIKE '%' || ${b} || '%' THEN 1 ELSE 0 END)`);
-          multiKeywordRankExpr = rankCases.join(' + ');
+          const rankCases = termBinds.map(
+            (b) => `(CASE WHEN raw_text ILIKE '%' || ${b} || '%' ESCAPE '\\' THEN 1 ELSE 0 END)`,
+          );
+          const rankExpr = rankCases.join(' + ');
+          where.push(`(${rankExpr}) > 0`);
+          multiKeywordRankExpr = rankExpr;
         }
         break;
       }
@@ -92,8 +91,6 @@ export async function browse(
   const limitBind = `$${vals.length - 1}`;
   const offsetBind = `$${vals.length}`;
 
-  // When multiple keywords are used, rank AND-matches above OR-matches,
-  // then fall back to recency. Single-term and filter-only queries use recency only.
   const orderBy = multiKeywordRankExpr
     ? `(${multiKeywordRankExpr}) DESC, posted_at DESC, post_raw_id DESC`
     : `posted_at DESC, post_raw_id DESC`;

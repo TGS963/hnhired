@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { Check, X, ChevronDown } from 'lucide-react';
+import { CHIP_BASE, CHIP_ACTIVE, CHIP_INACTIVE } from '@/lib/ui';
 
 type Values = {
   q?: string;
@@ -53,12 +54,6 @@ const STACK_OPTS = [
   'aws',
   'ml',
 ];
-
-const CHIP_BASE =
-  'inline-flex items-center gap-1.5 px-[9px] py-[5px] rounded-[6px] text-[12.5px] font-medium bg-transparent border cursor-pointer transition-colors duration-100 hover:bg-hover hover:text-fg';
-const CHIP_INACTIVE = 'text-fg-muted border-transparent';
-const CHIP_ACTIVE =
-  'text-fg bg-brand-soft border-[color:color-mix(in_oklch,var(--brand)_25%,transparent)]';
 
 const POPOVER =
   'absolute top-[calc(100%+4px)] left-0 min-w-[180px] max-h-[320px] overflow-y-auto bg-surface border border-border-c rounded-lg shadow-[var(--shadow-pop)] p-1 z-30';
@@ -159,6 +154,8 @@ export default function FilterBar({ defaultValues }: { defaultValues: Values }) 
           type="button"
           className={`${CHIP_BASE} ${savedOnly ? CHIP_ACTIVE : CHIP_INACTIVE}`}
           onClick={toggleSaved}
+          aria-current={savedOnly ? 'page' : undefined}
+          aria-pressed={savedOnly}
         >
           <span>Saved only</span>
         </button>

@@ -4,10 +4,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { Sparkles, Search, X, Loader2 } from 'lucide-react';
 import { useSearchPending } from './search-pending';
+import { FILTER_KEYS } from '@/lib/filter-keys';
 
 type Mode = 'ask' | 'keyword';
-
-import { FILTER_KEYS } from '@/lib/filter-keys';
 
 export default function SearchBar() {
   const router = useRouter();
@@ -17,7 +16,6 @@ export default function SearchBar() {
 
   const initialNl = searchParams.get('nl') ?? '';
   const initialQ = searchParams.get('q') ?? '';
-  // Default to 'ask' (AI search); falls back to 'keyword' if a keyword query is already in the URL
   const [mode, setMode] = useState<Mode>(initialNl ? 'ask' : initialQ ? 'keyword' : 'ask');
   const [value, setValue] = useState<string>(initialNl || initialQ || '');
 
@@ -36,7 +34,6 @@ export default function SearchBar() {
     if (isPending) return;
     const v = value.trim();
 
-    // BF1: Preserve existing filter params when submitting a search
     const sp = new URLSearchParams();
     for (const key of FILTER_KEYS) {
       const existing = searchParams.get(key);
@@ -44,7 +41,6 @@ export default function SearchBar() {
     }
 
     if (!v) {
-      // Clear search but keep filters
       const qs = sp.toString();
       start(() => router.push(qs ? `/?${qs}` : '/'));
       return;
@@ -73,7 +69,7 @@ export default function SearchBar() {
 
   return (
     <form
-      className="flex items-center gap-1 border border-border-c rounded-xl bg-surface px-2 py-2 mb-4 transition-[border-color,box-shadow] duration-100 focus-within:border-brand focus-within:shadow-[0_0_0_3px_var(--brand-soft)]"
+      className="flex items-center gap-1 border border-border-c rounded-xl bg-surface px-2 py-1.5 mb-4 transition-[border-color,box-shadow] duration-100 focus-within:border-brand focus-within:shadow-[0_0_0_3px_var(--brand-soft)]"
       onSubmit={onSubmit}
     >
       <div className="flex items-center gap-0.5 p-0.5 bg-bg-2 rounded-[7px] border border-border-c">
@@ -102,8 +98,8 @@ export default function SearchBar() {
       </div>
       <input
         ref={inputRef}
-        className="flex-1 border-none bg-transparent px-2 py-1.5 outline-none text-[15px] text-inherit placeholder:text-fg-faint"
-        placeholder={mode === 'ask' ? 'Ask in plain English…' : 'Keyword search — use commas for OR (e.g. india, junior)'}
+        className="flex-1 border-none bg-transparent px-2 py-1.5 outline-none text-sm text-inherit placeholder:text-fg-faint"
+        placeholder={mode === 'ask' ? 'Ask in plain English…' : 'Search by keyword… (comma = OR)'}
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={onKeyDown}

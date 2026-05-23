@@ -4,14 +4,10 @@ import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { ThemeToggle } from './theme-toggle';
 import SavedCount from './SavedCount';
+import { NAV_BASE, NAV_ACTIVE, NAV_INACTIVE } from '@/lib/ui';
 
 const ICON_BTN =
   'inline-flex w-7 h-7 items-center justify-center rounded-md text-fg-muted bg-transparent border-0 hover:text-fg hover:bg-hover transition-colors duration-100';
-
-const NAV_BASE =
-  'px-2.5 py-1.5 rounded-[6px] text-[13px] font-medium inline-flex items-center gap-1.5 transition-colors duration-100';
-const NAV_INACTIVE = 'text-fg-muted hover:text-fg hover:bg-hover';
-const NAV_ACTIVE = 'text-fg bg-hover';
 
 function GithubMark({ size = 15 }: { size?: number }) {
   return (
@@ -71,7 +67,7 @@ export default function Header() {
             href="https://news.ycombinator.com"
             target="_blank"
             rel="noreferrer"
-            className="text-fg-muted text-[12px] hover:text-fg transition-colors duration-100 max-[720px]:hidden"
+            className="text-fg-muted text-[13px] hover:text-fg transition-colors duration-100 max-[720px]:hidden"
             title="Data sourced from Hacker News 'Who is hiring?' threads"
           >
             via HN

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Bookmark, BookmarkCheck } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { seenClass } from '@/lib/ui';
 
 export type JobCardRow = {
   post_raw_id: string | number;
@@ -138,7 +139,7 @@ export default function JobRow({
     <Link
       href={`/job/${id}`}
       onClick={markSeen}
-      className={`grid grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,0.9fr)_auto] gap-5 px-3 py-4 items-center border-b border-row-divider cursor-pointer transition-colors hover:bg-hover rounded-sm${seen ? ' opacity-55 hover:opacity-100' : ''}`}
+      className={`grid grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,0.9fr)_auto] gap-5 px-3 py-4 items-center border-b border-row-divider cursor-pointer transition-colors hover:bg-hover${seenClass(seen)}`}
     >
       <div className="min-w-0">
         <div className="flex items-baseline gap-2.5 mb-1 flex-wrap">

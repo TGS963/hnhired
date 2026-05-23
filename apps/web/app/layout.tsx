@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { Suspense, type ReactNode } from 'react';
 import type { Metadata } from 'next';
 import { IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
@@ -75,7 +75,9 @@ export default function RootLayout({
           <SearchPendingProvider>
             <div className="hn-app-content">
               <div className="min-h-screen flex flex-col">
-                <Header />
+                <Suspense fallback={null}>
+                  <Header />
+                </Suspense>
                 <main className="flex-1 w-full max-w-[1200px] mx-auto pt-8 px-8 pb-24 max-[720px]:pt-5 max-[720px]:px-4 max-[720px]:pb-20">
                   {children}
                 </main>
