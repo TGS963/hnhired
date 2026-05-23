@@ -1,9 +1,17 @@
+'use client';
+
 import Link from 'next/link';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { ThemeToggle } from './theme-toggle';
 import SavedCount from './SavedCount';
 
 const ICON_BTN =
   'inline-flex w-7 h-7 items-center justify-center rounded-md text-fg-muted bg-transparent border-0 hover:text-fg hover:bg-hover transition-colors duration-100';
+
+const NAV_BASE =
+  'px-2.5 py-1.5 rounded-[6px] text-[13px] font-medium inline-flex items-center gap-1.5 transition-colors duration-100';
+const NAV_INACTIVE = 'text-fg-muted hover:text-fg hover:bg-hover';
+const NAV_ACTIVE = 'text-fg bg-hover';
 
 function GithubMark({ size = 15 }: { size?: number }) {
   return (
@@ -20,6 +28,14 @@ function GithubMark({ size = 15 }: { size?: number }) {
 }
 
 export default function Header() {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const isSaved = searchParams.get('saved') === '1';
+
+  const isBrowse = pathname === '/' && !isSaved;
+  const isMatch = pathname === '/match';
+  const isSavedTab = pathname === '/' && isSaved;
+
   return (
     <header className="sticky top-0 z-20 bg-[color-mix(in_oklch,var(--bg)_88%,transparent)] backdrop-blur-[12px] backdrop-saturate-[180%] border-b border-border-c">
       <div className="max-w-[1200px] mx-auto px-8 h-14 flex items-center gap-8 max-[720px]:px-4 max-[720px]:gap-3">
@@ -28,9 +44,25 @@ export default function Header() {
           <span className="font-medium text-fg ml-1">hired</span>
         </Link>
         <nav className="flex gap-0.5">
-          <Link href="/" className="px-2.5 py-1.5 rounded-[6px] text-fg-muted text-[13px] font-medium inline-flex items-center gap-1.5 transition-colors duration-100 hover:text-fg hover:bg-hover">Browse</Link>
-          <Link href="/match" className="px-2.5 py-1.5 rounded-[6px] text-fg-muted text-[13px] font-medium inline-flex items-center gap-1.5 transition-colors duration-100 hover:text-fg hover:bg-hover">Match</Link>
-          <Link href="/?saved=1" className="px-2.5 py-1.5 rounded-[6px] text-fg-muted text-[13px] font-medium inline-flex items-center gap-1.5 transition-colors duration-100 hover:text-fg hover:bg-hover">
+          <Link
+            href="/"
+            className={`${NAV_BASE} ${isBrowse ? NAV_ACTIVE : NAV_INACTIVE}`}
+            aria-current={isBrowse ? 'page' : undefined}
+          >
+            Browse
+          </Link>
+          <Link
+            href="/match"
+            className={`${NAV_BASE} ${isMatch ? NAV_ACTIVE : NAV_INACTIVE}`}
+            aria-current={isMatch ? 'page' : undefined}
+          >
+            Match
+          </Link>
+          <Link
+            href="/?saved=1"
+            className={`${NAV_BASE} ${isSavedTab ? NAV_ACTIVE : NAV_INACTIVE}`}
+            aria-current={isSavedTab ? 'page' : undefined}
+          >
             Saved<SavedCount />
           </Link>
         </nav>

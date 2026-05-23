@@ -7,6 +7,9 @@ import { useSearchPending } from './search-pending';
 
 type Mode = 'ask' | 'keyword';
 
+// Filter params that should be preserved across searches
+const FILTER_KEYS = ['remote', 'seniority', 'tech', 'comp_min', 'contract', 'loc', 'saved'];
+
 export default function SearchBar() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -15,7 +18,8 @@ export default function SearchBar() {
 
   const initialNl = searchParams.get('nl') ?? '';
   const initialQ = searchParams.get('q') ?? '';
-  const [mode, setMode] = useState<Mode>(initialNl ? 'ask' : initialQ ? 'keyword' : 'ask');
+  // BF2: Default to 'keyword' instead of 'ask'
+  const [mode, setMode] = useState<Mode>(initialNl ? 'ask' : initialQ ? 'keyword' : 'keyword');
   const [value, setValue] = useState<string>(initialNl || initialQ || '');
 
   useEffect(() => {
@@ -32,12 +36,28 @@ export default function SearchBar() {
   function submit() {
     if (isPending) return;
     const v = value.trim();
-    const href = !v
-      ? '/'
-      : mode === 'ask'
-        ? '/?nl=' + encodeURIComponent(v)
-        : '/?q=' + encodeURIComponent(v);
-    start(() => router.push(href));
+
+    // BF1: Preserve existing filter params when submitting a search
+    const sp = new URLSearchParams();
+    for (const key of FILTER_KEYS) {
+      const existing = searchParams.get(key);
+      if (existing) sp.set(key, existing);
+    }
+
+    if (!v) {
+      // Clear search but keep filters
+      const qs = sp.toString();
+      start(() => router.push(qs ? `/?${qs}` : '/'));
+      return;
+    }
+
+    if (mode === 'ask') {
+      sp.set('nl', v);
+    } else {
+      sp.set('q', v);
+    }
+
+    start(() => router.push(`/?${sp.toString()}`));
   }
 
   function onSubmit(e: FormEvent<HTMLFormElement>) {
@@ -54,7 +74,7 @@ export default function SearchBar() {
 
   return (
     <form
-      className="flex items-center gap-1 border border-border-c rounded-xl bg-surface px-2 py-1.5 mb-4 transition-[border-color,box-shadow] duration-100 focus-within:border-brand focus-within:shadow-[0_0_0_3px_var(--brand-soft)]"
+      className="flex items-center gap-1 border border-border-c rounded-xl bg-surface px-2 py-2 mb-4 transition-[border-color,box-shadow] duration-100 focus-within:border-brand focus-within:shadow-[0_0_0_3px_var(--brand-soft)]"
       onSubmit={onSubmit}
     >
       <div className="flex items-center gap-0.5 p-0.5 bg-bg-2 rounded-[7px] border border-border-c">
@@ -83,8 +103,8 @@ export default function SearchBar() {
       </div>
       <input
         ref={inputRef}
-        className="flex-1 border-none bg-transparent px-2 py-1.5 outline-none text-sm text-inherit placeholder:text-fg-faint"
-        placeholder={mode === 'ask' ? 'Ask in plain English…' : 'Search by keyword…'}
+        className="flex-1 border-none bg-transparent px-2 py-1.5 outline-none text-[15px] text-inherit placeholder:text-fg-faint"
+        placeholder={mode === 'ask' ? 'Ask in plain English…' : 'Keyword search — use commas for OR (e.g. india, junior)'}
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={onKeyDown}

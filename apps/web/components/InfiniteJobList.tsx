@@ -122,8 +122,14 @@ export default function InfiniteJobList({
         )
       ) : visible.length === 0 ? (
         <div className="py-24 px-5 text-center border border-dashed border-border-c rounded-[12px] mt-5">
-          <div className="text-[15px] font-medium mb-1.5">No matches</div>
-          <div className="text-fg-muted">Try clearing filters.</div>
+          <div className="text-[15px] font-medium mb-1.5">
+            {savedOnly ? 'No saved jobs yet' : 'No matches'}
+          </div>
+          <div className="text-fg-muted">
+            {savedOnly
+              ? 'Click the bookmark icon on any listing to save it for later.'
+              : 'Try clearing or adjusting your filters.'}
+          </div>
         </div>
       ) : layout === 'rows' ? (
         <div className="flex flex-col">

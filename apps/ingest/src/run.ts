@@ -71,7 +71,9 @@ async function main() {
        FROM posts_raw pr
        WHERE NOT EXISTS (
          SELECT 1 FROM posts_extractions pe
-         WHERE pe.post_raw_id = pr.hn_item_id AND pe.extractor_version = $1
+         WHERE pe.post_raw_id = pr.hn_item_id
+           AND pe.extractor_version = $1
+           AND pe.extraction_failed = FALSE
        )`,
       [EXTRACTOR_VERSION],
     );
@@ -96,13 +98,9 @@ async function main() {
 
       if (!ex) {
         extractions_failed++;
-        await client.query(
-          `INSERT INTO posts_extractions
-             (post_raw_id, extractor_version, extracted_at, extraction_failed, failure_reason)
-           VALUES ($1, $2, now(), true, $3)
-           ON CONFLICT (post_raw_id, extractor_version) DO NOTHING`,
-          [postId, EXTRACTOR_VERSION, err],
-        );
+        // Do NOT write failure to DB — leave the post unextracted so the next
+        // ingest run will pick it up and retry rather than abandoning it.
+        console.warn(`post ${postId} failed all retries: ${err}`);
         return;
       }
 
