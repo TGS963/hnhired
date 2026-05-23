@@ -5,7 +5,8 @@ import { browse, browseCount, BROWSE_PAGE_SIZE } from '@/lib/queries';
 import SearchBar from '@/components/SearchBar';
 import FilterBar from '@/components/FilterBar';
 import InfiniteJobList from '@/components/InfiniteJobList';
-import JobRow, { type JobCardRow } from '@/components/JobRow';
+import NlResultsList from '@/components/NlResultsList';
+import type { JobCardRow } from '@/components/JobRow';
 import type { Layout } from '@/components/LayoutToggle';
 
 export const metadata: Metadata = {
@@ -40,30 +41,22 @@ export default async function Page({
   const initialLayout: Layout = layoutCookie === 'cards' ? 'cards' : 'rows';
 
   if (params.nl && params.nl.trim().length > 0) {
-    const res = await nlSearch(params.nl);
-    const results = (res?.posts ?? []) as JobCardRow[];
-    const whyByPostId = (res?.whyByPostId ?? {}) as Record<string, string>;
+    let results: JobCardRow[] = [];
+    let whyByPostId: Record<string, string> = {};
+    let nlError: string | null = null;
+    try {
+      const res = await nlSearch(params.nl);
+      results = (res?.posts ?? []) as JobCardRow[];
+      whyByPostId = (res?.whyByPostId ?? {}) as Record<string, string>;
+    } catch (err) {
+      console.error('nlSearch failed:', err);
+      nlError = 'AI search is temporarily unavailable. Try Keyword mode instead.';
+    }
     return (
       <>
         <SearchBar />
         <FilterBar defaultValues={params} />
-        {results.length === 0 ? (
-          <div className="px-5 py-24 text-center border border-dashed border-border-c rounded-2xl mt-5">
-            <div className="text-[15px] font-medium mb-1.5">No matches</div>
-            <div className="text-fg-muted">Try a different query.</div>
-          </div>
-        ) : (
-          <div className="flex flex-col">
-            {results.map((row) => (
-              <JobRow
-                key={String(row.post_raw_id)}
-                row={row}
-                why={whyByPostId[String(row.post_raw_id)]}
-                whyLabel="why"
-              />
-            ))}
-          </div>
-        )}
+        <NlResultsList results={results} whyByPostId={whyByPostId} error={nlError} />
       </>
     );
   }
@@ -84,12 +77,14 @@ export default async function Page({
     browseCount(usp),
   ]);
   const initialNextOffset = initial.length === BROWSE_PAGE_SIZE ? BROWSE_PAGE_SIZE : null;
+  const searchKey = usp.toString() + (savedOnly ? '|saved' : '');
 
   return (
     <>
       <SearchBar />
       <FilterBar defaultValues={params} />
       <InfiniteJobList
+        key={searchKey}
         initial={initial}
         initialNextOffset={initialNextOffset}
         filters={filters}

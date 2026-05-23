@@ -6,6 +6,7 @@ import JobCard from './JobCard';
 import JobRowSkeleton from './JobRowSkeleton';
 import JobCardSkeleton from './JobCardSkeleton';
 import LayoutToggle, { type Layout } from './LayoutToggle';
+import { useSearchPending } from './search-pending';
 
 type Props = {
   initial: JobCardRow[];
@@ -33,6 +34,7 @@ export default function InfiniteJobList({
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [seenIds, setSeenIds] = useState<Set<string>>(new Set());
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const { isPending } = useSearchPending();
 
   useEffect(() => {
     function readState() {
@@ -108,7 +110,17 @@ export default function InfiniteJobList({
         <LayoutToggle initial={layout} onChange={setLayout} />
       </div>
 
-      {visible.length === 0 ? (
+      {isPending ? (
+        layout === 'rows' ? (
+          <div className="flex flex-col" aria-busy="true" aria-live="polite">
+            {Array.from({ length: 6 }).map((_, i) => <JobRowSkeleton key={i} />)}
+          </div>
+        ) : (
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-3 pt-3" aria-busy="true" aria-live="polite">
+            {Array.from({ length: 8 }).map((_, i) => <JobCardSkeleton key={i} />)}
+          </div>
+        )
+      ) : visible.length === 0 ? (
         <div className="py-24 px-5 text-center border border-dashed border-border-c rounded-[12px] mt-5">
           <div className="text-[15px] font-medium mb-1.5">No matches</div>
           <div className="text-fg-muted">Try clearing filters.</div>

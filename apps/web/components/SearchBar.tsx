@@ -2,7 +2,8 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
-import { Sparkles, Search, X } from 'lucide-react';
+import { Sparkles, Search, X, Loader2 } from 'lucide-react';
+import { useSearchPending } from './search-pending';
 
 type Mode = 'ask' | 'keyword';
 
@@ -10,6 +11,7 @@ export default function SearchBar() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const inputRef = useRef<HTMLInputElement>(null);
+  const { isPending, start } = useSearchPending();
 
   const initialNl = searchParams.get('nl') ?? '';
   const initialQ = searchParams.get('q') ?? '';
@@ -28,16 +30,14 @@ export default function SearchBar() {
   }, []);
 
   function submit() {
+    if (isPending) return;
     const v = value.trim();
-    if (!v) {
-      router.push('/');
-      return;
-    }
-    if (mode === 'ask') {
-      router.push('/?nl=' + encodeURIComponent(v));
-    } else {
-      router.push('/?q=' + encodeURIComponent(v));
-    }
+    const href = !v
+      ? '/'
+      : mode === 'ask'
+        ? '/?nl=' + encodeURIComponent(v)
+        : '/?q=' + encodeURIComponent(v);
+    start(() => router.push(href));
   }
 
   function onSubmit(e: FormEvent<HTMLFormElement>) {
@@ -89,7 +89,15 @@ export default function SearchBar() {
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={onKeyDown}
       />
-      {value ? (
+      {isPending ? (
+        <span
+          className="w-6 h-6 inline-flex items-center justify-center text-fg-muted mr-0.5"
+          aria-label="Searching"
+          role="status"
+        >
+          <Loader2 size={14} className="animate-spin" />
+        </span>
+      ) : value ? (
         <button
           type="button"
           className="w-6 h-6 rounded-[5px] inline-flex items-center justify-center text-fg-muted bg-transparent border-none cursor-pointer hover:text-fg hover:bg-hover"

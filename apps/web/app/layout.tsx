@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
+import { SearchPendingProvider } from '@/components/search-pending';
 import Header from '@/components/Header';
 import { SITE_URL, SITE_NAME, SITE_DESCRIPTION } from '@/lib/site';
 
@@ -71,15 +72,17 @@ export default function RootLayout({
           disableTransitionOnChange
           storageKey="hnhired:theme"
         >
-          <div className="hn-app-content">
-            <div className="min-h-screen flex flex-col">
-              <Header />
-              <main className="flex-1 w-full max-w-[1200px] mx-auto pt-8 px-8 pb-24 max-[720px]:pt-5 max-[720px]:px-4 max-[720px]:pb-20">
-                {children}
-              </main>
+          <SearchPendingProvider>
+            <div className="hn-app-content">
+              <div className="min-h-screen flex flex-col">
+                <Header />
+                <main className="flex-1 w-full max-w-[1200px] mx-auto pt-8 px-8 pb-24 max-[720px]:pt-5 max-[720px]:px-4 max-[720px]:pb-20">
+                  {children}
+                </main>
+              </div>
             </div>
-          </div>
-          {modal}
+            {modal}
+          </SearchPendingProvider>
         </ThemeProvider>
       </body>
     </html>
