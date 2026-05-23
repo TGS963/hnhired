@@ -40,7 +40,7 @@ export default function JobCard({
     <Link
       href={`/job/${id}`}
       onClick={markSeen}
-      className={`bg-surface border border-border-c rounded-xl p-4 flex flex-col gap-2.5 cursor-pointer transition-all duration-150 hover:border-border-strong${seen ? ' opacity-55 hover:opacity-100' : ''}`}
+      className={`bg-surface border border-border-c rounded-xl p-4 flex flex-col gap-2.5 cursor-pointer transition-all duration-150 hover:border-border-strong hover:shadow-[0_4px_16px_oklch(0_0_0_/_0.06)]${seen ? ' opacity-55 hover:opacity-100' : ''}`}
     >
       <div className="flex justify-between items-start gap-2">
         <div>
