@@ -87,19 +87,27 @@ async function main() {
       const postId = row.hn_item_id;
       let ex: Extraction | null = null;
       let err: string | null = null;
-      for (let attempt = 0; attempt < 2 && !ex; attempt++) {
-        try {
-          ex = await extractStructured(row.text);
-          err = null;
-        } catch (e: any) {
-          err = String(e?.message ?? e);
-        }
+      try {
+        ex = await extractStructured(row.text);
+      } catch (e: any) {
+        err = String(e?.message ?? e);
       }
 
       if (!ex) {
         extractions_failed++;
-        // Do NOT write failure to DB — leave the post unextracted so the next
-        // ingest run will pick it up and retry rather than abandoning it.
+        // Persist the failure so it is visible for debugging.
+        // The NOT EXISTS query filters on extraction_failed = FALSE, so this post
+        // will be retried on the next ingest run.
+        await client.query(
+          `INSERT INTO posts_extractions
+             (post_raw_id, extractor_version, extracted_at, extraction_failed, failure_reason)
+           VALUES ($1, $2, now(), true, $3)
+           ON CONFLICT (post_raw_id, extractor_version)
+             DO UPDATE SET extracted_at = now(),
+                           extraction_failed = true,
+                           failure_reason = EXCLUDED.failure_reason`,
+          [postId, EXTRACTOR_VERSION, err],
+        );
         console.warn(`post ${postId} failed all retries: ${err}`);
         return;
       }
@@ -133,7 +141,29 @@ async function main() {
            $15,$16,$17,$18,$19,
            ${embedding ? `$20::vector` : `NULL`}
          )
-         ON CONFLICT (post_raw_id, extractor_version) DO NOTHING`,
+         ON CONFLICT (post_raw_id, extractor_version)
+           DO UPDATE SET
+             extracted_at       = now(),
+             extraction_failed  = false,
+             failure_reason     = NULL,
+             is_job_posting     = EXCLUDED.is_job_posting,
+             company            = EXCLUDED.company,
+             canonical_company  = EXCLUDED.canonical_company,
+             role_titles        = EXCLUDED.role_titles,
+             locations          = EXCLUDED.locations,
+             remote_policy      = EXCLUDED.remote_policy,
+             salary_min         = EXCLUDED.salary_min,
+             salary_max         = EXCLUDED.salary_max,
+             currency           = EXCLUDED.currency,
+             equity             = EXCLUDED.equity,
+             seniority          = EXCLUDED.seniority,
+             tech_stack         = EXCLUDED.tech_stack,
+             visa_sponsorship   = EXCLUDED.visa_sponsorship,
+             contract_type      = EXCLUDED.contract_type,
+             apply_url          = EXCLUDED.apply_url,
+             apply_email        = EXCLUDED.apply_email,
+             summary_1line      = EXCLUDED.summary_1line,
+             embedding          = EXCLUDED.embedding`,
         [
           postId, EXTRACTOR_VERSION,
           ex.is_job_posting,

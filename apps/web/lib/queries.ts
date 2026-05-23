@@ -1,7 +1,8 @@
 import { query } from './db';
+import { FILTER_KEYS } from './filter-keys';
 import type { Post } from './schemas';
 
-const ALLOWED = new Set(['remote', 'loc', 'seniority', 'tech', 'comp_min', 'q', 'contract']);
+const ALLOWED = new Set<string>([...FILTER_KEYS, 'q', 'nl']);
 const CONTRACT_TYPES = new Set(['fulltime', 'parttime', 'contract', 'intern']);
 
 export const BROWSE_PAGE_SIZE = 30;
@@ -52,7 +53,8 @@ function buildWhere(params: URLSearchParams): {
       }
       case 'q': {
         const terms = raw.split(',').map((s) => s.trim()).filter(Boolean);
-
+        // Guard: q=',' or q=' , ,' produces no terms — skip to avoid invalid SQL
+        if (terms.length === 0) break;
         if (terms.length === 1) {
           // Single term: simple ILIKE, no ranking needed
           where.push(`raw_text ILIKE '%' || ${bind(terms[0])} || '%'`);

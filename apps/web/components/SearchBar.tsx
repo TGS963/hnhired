@@ -7,8 +7,7 @@ import { useSearchPending } from './search-pending';
 
 type Mode = 'ask' | 'keyword';
 
-// Filter params that should be preserved across searches
-const FILTER_KEYS = ['remote', 'seniority', 'tech', 'comp_min', 'contract', 'loc', 'saved'];
+import { FILTER_KEYS } from '@/lib/filter-keys';
 
 export default function SearchBar() {
   const router = useRouter();
@@ -18,8 +17,8 @@ export default function SearchBar() {
 
   const initialNl = searchParams.get('nl') ?? '';
   const initialQ = searchParams.get('q') ?? '';
-  // BF2: Default to 'keyword' instead of 'ask'
-  const [mode, setMode] = useState<Mode>(initialNl ? 'ask' : initialQ ? 'keyword' : 'keyword');
+  // Default to 'ask' (AI search); falls back to 'keyword' if a keyword query is already in the URL
+  const [mode, setMode] = useState<Mode>(initialNl ? 'ask' : initialQ ? 'keyword' : 'ask');
   const [value, setValue] = useState<string>(initialNl || initialQ || '');
 
   useEffect(() => {
