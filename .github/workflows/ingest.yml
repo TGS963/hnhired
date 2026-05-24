@@ -17,7 +17,7 @@ jobs:
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
-      EXTRACTOR_VERSION: v1
+      EXTRACTOR_VERSION: ${{ secrets.EXTRACTOR_VERSION }}
       EXTRACT_CONCURRENCY: '8'
     steps:
       - name: Checkout
