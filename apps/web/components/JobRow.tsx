@@ -113,13 +113,9 @@ export function useSaved(id: string) {
 
 export default function JobRow({
   row,
-  whyLabel,
-  why,
   rank,
 }: {
   row: JobCardRow;
-  whyLabel?: string;
-  why?: string | null;
   rank?: number;
 }) {
   const id = String(row.post_raw_id);
@@ -151,11 +147,7 @@ export default function JobRow({
           </span>
         </div>
         {row.summary_1line && <div className="text-[13px] text-fg-muted overflow-hidden [display:-webkit-box] [-webkit-line-clamp:1] [-webkit-box-orient:vertical]">{row.summary_1line}</div>}
-        {why && (
-          <div className="text-[13px] text-fg-muted overflow-hidden [display:-webkit-box] [-webkit-line-clamp:1] [-webkit-box-orient:vertical]">
-            <em>{whyLabel ?? 'why'}:</em> {why}
-          </div>
-        )}
+
       </div>
       <div className="flex items-center gap-2 flex-wrap text-[12.5px] min-w-0 text-fg-muted">
         {remote && <span className={`hn-tag-${remote}`}>{remote}</span>}

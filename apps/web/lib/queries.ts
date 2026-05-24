@@ -4,6 +4,8 @@ import type { Post } from './schemas';
 
 const SQL_KEYS = FILTER_KEYS.filter((k) => k !== 'saved');
 const ALLOWED = new Set<string>([...SQL_KEYS, 'q']);
+// YYYY-MM month format validation
+const MONTH_RE = /^\d{4}-(?:0[1-9]|1[0-2])$/
 const CONTRACT_TYPES = new Set(['fulltime', 'parttime', 'contract', 'intern']);
 
 export const BROWSE_PAGE_SIZE = 30;
@@ -74,6 +76,14 @@ function buildWhere(params: URLSearchParams): {
       }
       case 'contract':
         if (CONTRACT_TYPES.has(raw)) where.push(`contract_type = ${bind(raw)}`);
+        break;
+      case 'month':
+        // Filter to a specific HN thread by month (YYYY-MM format)
+        if (MONTH_RE.test(raw)) {
+          where.push(
+            `story_id = (SELECT id FROM stories WHERE date_trunc('month', month) = date_trunc('month', ${bind(raw + '-01')}::date) ORDER BY month DESC, id DESC LIMIT 1)`,
+          );
+        }
         break;
     }
   }

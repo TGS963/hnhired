@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { Check, X, ChevronDown } from 'lucide-react';
 import { CHIP_BASE, CHIP_ACTIVE, CHIP_INACTIVE } from '@/lib/ui';
+import type { StoryMonth } from '@/lib/stories-api';
 
 type Values = {
   q?: string;
@@ -13,6 +14,7 @@ type Values = {
   tech?: string;
   comp_min?: string;
   contract?: string;
+  month?: string;
   nl?: string;
 };
 
@@ -63,7 +65,13 @@ const POPOVER_ITEM_BASE =
 const CHIP_VALUE =
   'font-medium text-brand dark:text-[color:color-mix(in_oklch,var(--brand)_70%,white)]';
 
-export default function FilterBar({ defaultValues }: { defaultValues: Values }) {
+export default function FilterBar({
+  defaultValues,
+  months,
+}: {
+  defaultValues: Values;
+  months: StoryMonth[];
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -71,8 +79,12 @@ export default function FilterBar({ defaultValues }: { defaultValues: Values }) 
   const comp_min = defaultValues.comp_min ?? '';
   const seniority = defaultValues.seniority ?? '';
   const tech = defaultValues.tech ?? '';
+  const month = defaultValues.month ?? '';
   const techList = tech ? tech.split(',').map((t) => t.trim()).filter(Boolean) : [];
   const savedOnly = searchParams.get('saved') === '1';
+
+  // Build month options from stories prop
+  const monthOpts: Option[] = months.map((m) => ({ id: m.id, label: m.label }));
 
   const [hideSeen, setHideSeen] = useState(false);
   useEffect(() => {
@@ -114,6 +126,15 @@ export default function FilterBar({ defaultValues }: { defaultValues: Values }) 
   return (
     <div className="mb-2">
       <div className="flex items-center gap-1.5 flex-wrap py-1 max-[720px]:gap-1">
+        {monthOpts.length > 1 && (
+          <SingleChip
+            label="Month"
+            value={month}
+            options={monthOpts}
+            onChange={(v) => setParam('month', v)}
+            onClear={() => setParam('month', null)}
+          />
+        )}
         <SingleChip
           label="Remote"
           value={remote}

@@ -15,13 +15,9 @@ export type { JobCardRow };
 
 export default function JobCard({
   row,
-  whyLabel,
-  why,
   rank,
 }: {
   row: JobCardRow;
-  whyLabel?: string;
-  why?: string | null;
   rank?: number;
 }) {
   const id = String(row.post_raw_id);
@@ -68,11 +64,7 @@ export default function JobCard({
         </button>
       </div>
       {row.summary_1line && <p className="text-[13px] text-fg-muted m-0 leading-normal overflow-hidden [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical]">{row.summary_1line}</p>}
-      {why && (
-        <p className="text-[13px] text-fg-muted m-0 leading-normal overflow-hidden [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical]">
-          <em>{whyLabel ?? 'why'}:</em> {why}
-        </p>
-      )}
+
       <div className="flex flex-wrap gap-2 text-xs items-center">
         {remote && <span className={`hn-tag-${remote}`}>{remote}</span>}
         {locs && <span className="text-fg-muted">{locs}</span>}

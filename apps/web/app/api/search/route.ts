@@ -27,8 +27,8 @@ export async function POST(req: Request) {
       );
     }
 
-    const { posts, whyByPostId } = await nlSearch(parsed.data.query);
-    return NextResponse.json({ posts, whyByPostId });
+    const { posts } = await nlSearch(parsed.data.query);
+    return NextResponse.json({ posts });
   } catch (err) {
     console.error('[api/search] error:', err);
     return NextResponse.json({ error: 'search failed' }, { status: 500 });
