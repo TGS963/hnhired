@@ -7,7 +7,7 @@ AI-powered alternative to the stale `hnhired.fly.dev`. Scrapes HN "Who is hiring
 - **Web**: Next.js 15 App Router + Tailwind on Vercel (`apps/web`)
 - **Ingest**: TS Node script via GitHub Actions daily cron (`apps/ingest`)
 - **DB**: Neon Postgres + pgvector (`db/migrations`)
-- **LLM**: Gemini 3.5 Flash (extraction, batch), Gemini 3 Pro (search/match), gemini-embedding-001 (1024 dim)
+- **LLM**: Gemini 3.5 Flash (extraction, batch), Gemini 3.5 Flash (search/match), gemini-embedding-001 (1024 dim)
 
 ## Layout
 
