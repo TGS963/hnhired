@@ -1,7 +1,7 @@
 {
   "name": "hn-hired-ai",
   "private": true,
-  "workspaces": ["apps/*"],
+  "workspaces": ["apps/*", "packages/*"],
   "scripts": {
     "ingest": "npm run -w @hnhired/ingest start",
     "web:dev": "npm run -w @hnhired/web dev",

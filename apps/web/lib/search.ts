@@ -3,7 +3,7 @@ import { query } from './db';
 import { filterClause } from './queries';
 import { generateJson, embedText } from './gemini';
 import { FilterSpec, type Post } from './schemas';
-import { COUNTRIES, COUNTRY_ALIASES } from './countries';
+import { CANONICAL_COUNTRY_NAMES, COUNTRY_ALIAS_RULES } from '@hnhired/shared/countries';
 
 // FilterBar dimensions that override LLM inference when set explicitly.
 export const EXPLICIT_DIMS = ['remote', 'loc', 'seniority', 'tech', 'comp_min', 'contract', 'month'] as const;
@@ -43,7 +43,7 @@ export async function nlSearch(
     {
       system:
         'You convert candidate queries into structured FilterSpec filters. Only emit fields present in the schema. Omit anything you are not confident about. ' +
-        `When a query names or implies a country, put its canonical name in locations_any, spelled exactly as one of: ${COUNTRIES.join(', ')}. Collapse aliases: ${COUNTRY_ALIASES}`,
+        `When a query names or implies a country, put its canonical name in locations_any, spelled exactly as one of: ${CANONICAL_COUNTRY_NAMES.join(', ')}. Collapse aliases: ${COUNTRY_ALIAS_RULES}`,
     },
   );
 
@@ -74,8 +74,7 @@ export async function nlSearch(
   if (!overridden.has('remote') && spec.remote_policy)
     where.push(`remote_policy = ${bind(spec.remote_policy)}`);
   if (!overridden.has('loc') && spec.locations_any?.length) {
-    // Substring match per element so "India" hits "Mumbai, India" / "Remote (India)",
-    // matching the keyword path's raw_text ILIKE behavior instead of exact array overlap.
+    // Substring per element to mirror the keyword path's raw_text ILIKE.
     const locClauses = spec.locations_any.map(
       (loc) => `EXISTS (SELECT 1 FROM unnest(locations) l WHERE l ILIKE '%' || ${bind(loc)} || '%')`,
     );

@@ -1,9 +1,4 @@
-// Canonical country names used to normalize the `locations` field at extraction
-// time. The search side (apps/web/lib/countries.ts) MUST use the same list so a
-// query for "USA" matches stored "USA" rather than a variant like "United States".
-// Keep the two files in sync.
-
-export const COUNTRIES = [
+export const CANONICAL_COUNTRY_NAMES = [
   'Afghanistan', 'Albania', 'Algeria', 'Andorra', 'Angola', 'Argentina',
   'Armenia', 'Australia', 'Austria', 'Azerbaijan', 'Bahamas', 'Bahrain',
   'Bangladesh', 'Barbados', 'Belarus', 'Belgium', 'Belize', 'Benin', 'Bhutan',
@@ -40,8 +35,7 @@ export const COUNTRIES = [
   'Zimbabwe',
 ] as const;
 
-// Common aliases that must collapse to a single canonical name above.
-export const COUNTRY_ALIASES =
+export const COUNTRY_ALIAS_RULES =
   'US / U.S. / U.S.A. / United States / United States of America -> USA; ' +
   'UK / U.K. / Britain / Great Britain / England / Scotland / Wales / Northern Ireland / United Kingdom -> UK; ' +
   'UAE / U.A.E. / United Arab Emirates -> UAE; ' +
