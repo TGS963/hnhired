@@ -3,6 +3,7 @@ import { query } from './db';
 import { filterClause } from './queries';
 import { generateJson, embedText } from './gemini';
 import { FilterSpec, type Post } from './schemas';
+import { COUNTRIES, COUNTRY_ALIASES } from './countries';
 
 // FilterBar dimensions that override LLM inference when set explicitly.
 export const EXPLICIT_DIMS = ['remote', 'loc', 'seniority', 'tech', 'comp_min', 'contract', 'month'] as const;
@@ -41,7 +42,8 @@ export async function nlSearch(
     filterSpecGeminiSchema,
     {
       system:
-        'You convert candidate queries into structured FilterSpec filters. Only emit fields present in the schema. Omit anything you are not confident about.',
+        'You convert candidate queries into structured FilterSpec filters. Only emit fields present in the schema. Omit anything you are not confident about. ' +
+        `When a query names or implies a country, put its canonical name in locations_any, spelled exactly as one of: ${COUNTRIES.join(', ')}. Collapse aliases: ${COUNTRY_ALIASES}`,
     },
   );
 

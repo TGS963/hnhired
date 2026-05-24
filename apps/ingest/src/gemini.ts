@@ -1,5 +1,6 @@
 import { GoogleGenAI, Type } from '@google/genai';
 import { z } from 'zod';
+import { COUNTRIES, COUNTRY_ALIASES } from './countries.js';
 
 const apiKey = process.env.GOOGLE_API_KEY;
 if (!apiKey) throw new Error('GOOGLE_API_KEY required');
@@ -12,7 +13,7 @@ const EMBED_DIM = 1024;
 
 const SYSTEM = `Extract structured job fields from this HN 'Who is hiring?' comment. Return null for fields not stated. Do not infer. summary_1line is at most 280 chars.
 
-For locations: keep the stated place names AND also append the country for each one when it is unambiguous (e.g. "Bangalore" -> ["Bangalore", "India"]; "SF" -> ["SF", "USA"]; "Berlin" -> ["Berlin", "Germany"]). Use a consistent country name ("USA", "UK", "India", "Germany"). This country normalization is the only allowed inference; do not invent cities or countries that are not implied by a stated location. If only a country is given, return just the country.
+For locations: keep the stated place names AND also append the country for each one when it is unambiguous (e.g. "Bangalore" -> ["Bangalore", "India"]; "SF" -> ["SF", "USA"]; "Berlin" -> ["Berlin", "Germany"]). The appended country MUST be spelled exactly as one of these canonical names: ${COUNTRIES.join(', ')}. Collapse aliases to the canonical name: ${COUNTRY_ALIASES} This country normalization is the only allowed inference; do not invent cities or countries that are not implied by a stated location. If only a country is given, return just the canonical country name.
 
 Also classify whether the comment is actually a job posting. Set is_job_posting=false for:
 - meta-comments about the thread itself ("great thread", "nice format")
