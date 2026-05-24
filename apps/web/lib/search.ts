@@ -1,7 +1,11 @@
 import { Type } from '@google/genai';
 import { query } from './db';
+import { filterClause } from './queries';
 import { generateJson, embedText } from './gemini';
 import { FilterSpec, type Post } from './schemas';
+
+// FilterBar dimensions that override LLM inference when set explicitly.
+export const EXPLICIT_DIMS = ['remote', 'loc', 'seniority', 'tech', 'comp_min', 'contract', 'month'] as const;
 
 const filterSpecGeminiSchema = {
   type: Type.OBJECT,
@@ -48,18 +52,32 @@ export async function nlSearch(
     return `$${vals.length}`;
   };
 
-  // LLM-derived filters — skipped for any dimension the user explicitly overrode
-  if (!explicit?.get('remote') && spec.remote_policy)
+  // Only dimensions that yield a real clause count as overridden, so remote=any
+  // ("no filter") still lets LLM inference apply for that dimension.
+  const overridden = new Set<string>();
+  if (explicit) {
+    for (const key of EXPLICIT_DIMS) {
+      const raw = explicit.get(key);
+      if (!raw) continue;
+      const clause = filterClause(key, raw, bind);
+      if (clause) {
+        where.push(clause);
+        overridden.add(key);
+      }
+    }
+  }
+
+  if (!overridden.has('remote') && spec.remote_policy)
     where.push(`remote_policy = ${bind(spec.remote_policy)}`);
-  if (!explicit?.get('loc') && spec.locations_any?.length)
+  if (!overridden.has('loc') && spec.locations_any?.length)
     where.push(`locations && ${bind(spec.locations_any)}::text[]`);
-  if (!explicit?.get('seniority') && spec.seniority_any?.length)
+  if (!overridden.has('seniority') && spec.seniority_any?.length)
     where.push(`seniority && ${bind(spec.seniority_any)}::text[]`);
-  if (!explicit?.get('tech') && spec.tech_any?.length)
+  if (!overridden.has('tech') && spec.tech_any?.length)
     where.push(`tech_stack && ${bind(spec.tech_any)}::text[]`);
-  if (!explicit?.get('contract') && spec.contract_type)
+  if (!overridden.has('contract') && spec.contract_type)
     where.push(`contract_type = ${bind(spec.contract_type)}`);
-  if (!explicit?.get('comp_min') && typeof spec.salary_min === 'number')
+  if (!overridden.has('comp_min') && typeof spec.salary_min === 'number')
     where.push(`salary_min >= ${bind(spec.salary_min)}`);
   // visa / equity have no FilterBar UI — always use LLM inference
   if (typeof spec.visa_sponsorship === 'boolean')
@@ -68,48 +86,6 @@ export async function nlSearch(
     where.push(`equity = ${bind(spec.equity)}`);
   if (spec.keyword)
     where.push(`raw_text ILIKE '%' || ${bind(spec.keyword)} || '%'`);
-
-  // Explicit FilterBar overrides — always applied, take priority over LLM inference
-  if (explicit) {
-    const CONTRACT_TYPES = new Set(['fulltime', 'parttime', 'contract', 'intern']);
-    const MONTH_RE = /^\d{4}-(?:0[1-9]|1[0-2])$/;
-
-    const rawRemote = explicit.get('remote');
-    if (rawRemote && rawRemote !== 'any')
-      where.push(`remote_policy = ${bind(rawRemote)}`);
-
-    const rawLoc = explicit.get('loc');
-    if (rawLoc) {
-      const locs = rawLoc.split(',').map((s) => s.trim()).filter(Boolean);
-      if (locs.length) where.push(`locations && ${bind(locs)}::text[]`);
-    }
-
-    const rawSeniority = explicit.get('seniority');
-    if (rawSeniority) {
-      const terms = rawSeniority.split(',').map((s) => s.trim()).filter(Boolean);
-      if (terms.length) where.push(`seniority && ${bind(terms)}::text[]`);
-    }
-
-    const rawTech = explicit.get('tech');
-    if (rawTech) {
-      const terms = rawTech.split(',').map((s) => s.trim()).filter(Boolean);
-      if (terms.length) where.push(`tech_stack && ${bind(terms)}::text[]`);
-    }
-
-    const rawCompMin = explicit.get('comp_min');
-    const compN = Number(rawCompMin);
-    if (rawCompMin && Number.isFinite(compN)) where.push(`salary_min >= ${bind(compN)}`);
-
-    const rawContract = explicit.get('contract');
-    if (rawContract && CONTRACT_TYPES.has(rawContract))
-      where.push(`contract_type = ${bind(rawContract)}`);
-
-    const rawMonth = explicit.get('month');
-    if (rawMonth && MONTH_RE.test(rawMonth))
-      where.push(
-        `story_id = (SELECT id FROM stories WHERE date_trunc('month', month) = date_trunc('month', ${bind(rawMonth + '-01')}::date) LIMIT 1)`,
-      );
-  }
 
   let orderBy = 'posted_at DESC';
   if (spec.semantic_query) {

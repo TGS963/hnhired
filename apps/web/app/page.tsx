@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
-import { nlSearch } from '@/lib/search';
+import { nlSearch, EXPLICIT_DIMS } from '@/lib/search';
 import { browse, browseCount, BROWSE_PAGE_SIZE } from '@/lib/queries';
 import { getAvailableMonths } from '@/lib/stories-api';
 import SearchBar from '@/components/SearchBar';
@@ -43,10 +43,8 @@ export default async function Page({
   const initialLayout: Layout = layoutCookie === 'cards' ? 'cards' : 'rows';
 
   if (params.nl && params.nl.trim().length > 0) {
-    // Build explicit FilterBar params so nlSearch can respect them alongside LLM inference
-    const FILTER_KEYS_NL = ['remote', 'loc', 'seniority', 'tech', 'comp_min', 'contract', 'month'] as const;
     const nlFilters = new URLSearchParams();
-    for (const key of FILTER_KEYS_NL) {
+    for (const key of EXPLICIT_DIMS) {
       const v = params[key];
       if (typeof v === 'string' && v) nlFilters.set(key, v);
     }
@@ -54,7 +52,6 @@ export default async function Page({
 
     let results: JobCardRow[] = [];
     let nlError: string | null = null;
-    // Parallelise months fetch with the AI search call
     const [nlRes, months] = await Promise.allSettled([
       nlSearch(params.nl, hasFilters ? nlFilters : undefined),
       getAvailableMonths(),

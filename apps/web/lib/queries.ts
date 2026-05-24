@@ -4,13 +4,50 @@ import type { Post } from './schemas';
 
 const SQL_KEYS = FILTER_KEYS.filter((k) => k !== 'saved');
 const ALLOWED = new Set<string>([...SQL_KEYS, 'q']);
-// YYYY-MM month format validation
-const MONTH_RE = /^\d{4}-(?:0[1-9]|1[0-2])$/
+const MONTH_RE = /^\d{4}-(?:0[1-9]|1[0-2])$/;
 const CONTRACT_TYPES = new Set(['fulltime', 'parttime', 'contract', 'intern']);
 
 export const BROWSE_PAGE_SIZE = 30;
 
 const escapeLike = (s: string) => s.replace(/[\\%_]/g, (m) => `\\${m}`);
+const splitCsv = (raw: string) => raw.split(',').map((s) => s.trim()).filter(Boolean);
+
+// Shared by browse() and nlSearch() so the two paths can't diverge.
+export function filterClause(
+  key: string,
+  raw: string,
+  bind: (v: any) => string,
+): string | null {
+  switch (key) {
+    case 'remote':
+      return raw && raw !== 'any' ? `remote_policy = ${bind(raw)}` : null;
+    case 'loc': {
+      const a = splitCsv(raw);
+      return a.length ? `locations && ${bind(a)}::text[]` : null;
+    }
+    case 'seniority': {
+      const a = splitCsv(raw);
+      return a.length ? `seniority && ${bind(a)}::text[]` : null;
+    }
+    case 'tech': {
+      const a = splitCsv(raw);
+      return a.length ? `tech_stack && ${bind(a)}::text[]` : null;
+    }
+    case 'comp_min': {
+      const n = Number(raw);
+      return Number.isFinite(n) ? `salary_min >= ${bind(n)}` : null;
+    }
+    case 'contract':
+      return CONTRACT_TYPES.has(raw) ? `contract_type = ${bind(raw)}` : null;
+    case 'month':
+      // A month can have both a hiring and a freelancer story; pick the hiring one.
+      return MONTH_RE.test(raw)
+        ? `story_id = (SELECT id FROM stories WHERE thread_type = 'hiring' AND date_trunc('month', month) = date_trunc('month', ${bind(raw + '-01')}::date) ORDER BY month DESC, id DESC LIMIT 1)`
+        : null;
+    default:
+      return null;
+  }
+}
 
 function buildWhere(params: URLSearchParams): {
   where: string[];
@@ -31,61 +68,34 @@ function buildWhere(params: URLSearchParams): {
     const raw = params.get(key);
     if (raw == null || raw === '') continue;
 
-    switch (key) {
-      case 'remote':
-        where.push(`remote_policy = ${bind(raw)}`);
-        break;
-      case 'loc':
-        where.push(`locations && ${bind(raw.split(',').map((s) => s.trim()).filter(Boolean))}::text[]`);
-        break;
-      case 'seniority':
-        where.push(`seniority && ${bind(raw.split(',').map((s) => s.trim()).filter(Boolean))}::text[]`);
-        break;
-      case 'tech':
-        where.push(`tech_stack && ${bind(raw.split(',').map((s) => s.trim()).filter(Boolean))}::text[]`);
-        break;
-      case 'comp_min': {
-        const n = Number(raw);
-        if (Number.isFinite(n)) where.push(`salary_min >= ${bind(n)}`);
-        break;
+    if (key === 'q') {
+      if (raw.length > 200) continue;
+      const seen = new Set<string>();
+      const terms: string[] = [];
+      for (const t of raw.split(',').map((s) => s.trim()).filter((s) => s.length >= 2 && s.length <= 64)) {
+        const k = t.toLowerCase();
+        if (seen.has(k)) continue;
+        seen.add(k);
+        terms.push(escapeLike(t));
+        if (terms.length >= 8) break;
       }
-      case 'q': {
-        if (raw.length > 200) break;
-        const seen = new Set<string>();
-        const terms: string[] = [];
-        for (const t of raw.split(',').map((s) => s.trim()).filter((s) => s.length >= 2 && s.length <= 64)) {
-          const k = t.toLowerCase();
-          if (seen.has(k)) continue;
-          seen.add(k);
-          terms.push(escapeLike(t));
-          if (terms.length >= 8) break;
-        }
-        if (terms.length === 0) break;
-        if (terms.length === 1) {
-          where.push(`raw_text ILIKE '%' || ${bind(terms[0])} || '%' ESCAPE '\\'`);
-        } else {
-          const termBinds = terms.map((t) => bind(t));
-          const rankCases = termBinds.map(
-            (b) => `(CASE WHEN raw_text ILIKE '%' || ${b} || '%' ESCAPE '\\' THEN 1 ELSE 0 END)`,
-          );
-          const rankExpr = rankCases.join(' + ');
-          where.push(`(${rankExpr}) > 0`);
-          multiKeywordRankExpr = rankExpr;
-        }
-        break;
+      if (terms.length === 0) continue;
+      if (terms.length === 1) {
+        where.push(`raw_text ILIKE '%' || ${bind(terms[0])} || '%' ESCAPE '\\'`);
+      } else {
+        const termBinds = terms.map((t) => bind(t));
+        const rankCases = termBinds.map(
+          (b) => `(CASE WHEN raw_text ILIKE '%' || ${b} || '%' ESCAPE '\\' THEN 1 ELSE 0 END)`,
+        );
+        const rankExpr = rankCases.join(' + ');
+        where.push(`(${rankExpr}) > 0`);
+        multiKeywordRankExpr = rankExpr;
       }
-      case 'contract':
-        if (CONTRACT_TYPES.has(raw)) where.push(`contract_type = ${bind(raw)}`);
-        break;
-      case 'month':
-        // Filter to a specific HN thread by month (YYYY-MM format)
-        if (MONTH_RE.test(raw)) {
-          where.push(
-            `story_id = (SELECT id FROM stories WHERE date_trunc('month', month) = date_trunc('month', ${bind(raw + '-01')}::date) ORDER BY month DESC, id DESC LIMIT 1)`,
-          );
-        }
-        break;
+      continue;
     }
+
+    const clause = filterClause(key, raw, bind);
+    if (clause) where.push(clause);
   }
   return { where, vals, multiKeywordRankExpr };
 }

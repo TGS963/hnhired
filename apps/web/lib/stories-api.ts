@@ -5,8 +5,6 @@ export type StoryMonth = {
   id: string;
   /** Human-readable label, e.g. "May 2026" */
   label: string;
-  /** HN story item ID */
-  hn_item_id: number;
 };
 
 const MONTH_LABELS: Record<number, string> = {
@@ -14,13 +12,13 @@ const MONTH_LABELS: Record<number, string> = {
   7: 'Jul', 8: 'Aug', 9: 'Sep', 10: 'Oct', 11: 'Nov', 12: 'Dec',
 };
 
-/**
- * Returns all ingested HN "Who is hiring?" threads, newest first.
- * Used to populate the Month filter chip in FilterBar.
- */
+// One option per hiring-thread month, newest first, de-duplicated by YYYY-MM.
 export async function getAvailableMonths(): Promise<StoryMonth[]> {
-  const rows = await query<{ hn_item_id: string | number; month: string | Date }>(
-    `SELECT hn_item_id, month FROM stories ORDER BY month DESC`,
+  const rows = await query<{ month: string | Date }>(
+    `SELECT DISTINCT ON (date_trunc('month', month)) month
+       FROM stories
+      WHERE thread_type = 'hiring'
+      ORDER BY date_trunc('month', month) DESC`,
     [],
   );
   return rows.map((r) => {
@@ -29,6 +27,6 @@ export async function getAvailableMonths(): Promise<StoryMonth[]> {
     const mon = d.getUTCMonth() + 1;
     const id = `${year}-${String(mon).padStart(2, '0')}`;
     const label = `${MONTH_LABELS[mon]} ${year}`;
-    return { id, label, hn_item_id: Number(r.hn_item_id) };
+    return { id, label };
   });
 }
