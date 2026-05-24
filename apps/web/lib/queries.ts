@@ -81,7 +81,7 @@ function buildWhere(params: URLSearchParams): {
         // Filter to a specific HN thread by month (YYYY-MM format)
         if (MONTH_RE.test(raw)) {
           where.push(
-            `story_id = (SELECT id FROM stories WHERE date_trunc('month', month) = date_trunc('month', ${bind(raw + '-01')}::date) LIMIT 1)`,
+            `story_id = (SELECT id FROM stories WHERE date_trunc('month', month) = date_trunc('month', ${bind(raw + '-01')}::date) ORDER BY month DESC, id DESC LIMIT 1)`,
           );
         }
         break;
