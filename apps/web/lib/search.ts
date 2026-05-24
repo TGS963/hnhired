@@ -73,13 +73,8 @@ export async function nlSearch(
 
   if (!overridden.has('remote') && spec.remote_policy)
     where.push(`remote_policy = ${bind(spec.remote_policy)}`);
-  if (!overridden.has('loc') && spec.locations_any?.length) {
-    // Substring per element to mirror the keyword path's raw_text ILIKE.
-    const locClauses = spec.locations_any.map(
-      (loc) => `EXISTS (SELECT 1 FROM unnest(locations) l WHERE l ILIKE '%' || ${bind(loc)} || '%')`,
-    );
-    where.push(`(${locClauses.join(' OR ')})`);
-  }
+  if (!overridden.has('loc') && spec.locations_any?.length)
+    where.push(`locations && ${bind(spec.locations_any)}::text[]`);
   if (!overridden.has('seniority') && spec.seniority_any?.length)
     where.push(`seniority && ${bind(spec.seniority_any)}::text[]`);
   if (!overridden.has('tech') && spec.tech_any?.length)
