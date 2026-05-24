@@ -12,6 +12,8 @@ const EMBED_DIM = 1024;
 
 const SYSTEM = `Extract structured job fields from this HN 'Who is hiring?' comment. Return null for fields not stated. Do not infer. summary_1line is at most 280 chars.
 
+For locations: keep the stated place names AND also append the country for each one when it is unambiguous (e.g. "Bangalore" -> ["Bangalore", "India"]; "SF" -> ["SF", "USA"]; "Berlin" -> ["Berlin", "Germany"]). Use a consistent country name ("USA", "UK", "India", "Germany"). This country normalization is the only allowed inference; do not invent cities or countries that are not implied by a stated location. If only a country is given, return just the country.
+
 Also classify whether the comment is actually a job posting. Set is_job_posting=false for:
 - meta-comments about the thread itself ("great thread", "nice format")
 - accidental pastes of terminal output, code, error messages, or unrelated text

@@ -4,7 +4,7 @@ import { extractStructured, embedText, type Extraction } from './gemini.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 if (!DATABASE_URL) throw new Error('DATABASE_URL required');
-const EXTRACTOR_VERSION = process.env.EXTRACTOR_VERSION ?? 'v1';
+const EXTRACTOR_VERSION = process.env.EXTRACTOR_VERSION ?? 'v2';
 
 function canonicalize(name: string | null): string | null {
   if (!name) return null;

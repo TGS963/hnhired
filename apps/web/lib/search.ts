@@ -33,7 +33,9 @@ function vecLit(v: number[]): string {
 export async function nlSearch(
   q: string,
   explicit?: URLSearchParams,
+  opts: { limit?: number } = {},
 ): Promise<{ posts: Post[] }> {
+  const limit = Math.max(1, Math.min(opts.limit ?? 50, 100));
   const rawSpec = await generateJson<unknown>(
     `Translate this natural-language job search into a FilterSpec JSON.\n\nQuery: ${q}`,
     filterSpecGeminiSchema,
@@ -69,8 +71,14 @@ export async function nlSearch(
 
   if (!overridden.has('remote') && spec.remote_policy)
     where.push(`remote_policy = ${bind(spec.remote_policy)}`);
-  if (!overridden.has('loc') && spec.locations_any?.length)
-    where.push(`locations && ${bind(spec.locations_any)}::text[]`);
+  if (!overridden.has('loc') && spec.locations_any?.length) {
+    // Substring match per element so "India" hits "Mumbai, India" / "Remote (India)",
+    // matching the keyword path's raw_text ILIKE behavior instead of exact array overlap.
+    const locClauses = spec.locations_any.map(
+      (loc) => `EXISTS (SELECT 1 FROM unnest(locations) l WHERE l ILIKE '%' || ${bind(loc)} || '%')`,
+    );
+    where.push(`(${locClauses.join(' OR ')})`);
+  }
   if (!overridden.has('seniority') && spec.seniority_any?.length)
     where.push(`seniority && ${bind(spec.seniority_any)}::text[]`);
   if (!overridden.has('tech') && spec.tech_any?.length)
@@ -98,7 +106,7 @@ export async function nlSearch(
     SELECT * FROM posts
     ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
     ORDER BY ${orderBy}
-    LIMIT 20
+    LIMIT ${bind(limit)}
   `;
   const posts = await query<Post>(sql, vals);
 
