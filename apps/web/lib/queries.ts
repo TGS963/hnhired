@@ -18,9 +18,10 @@ export function filterClause(
   raw: string,
   bind: (v: any) => string,
 ): string | null {
+  if (raw === 'any') return null; // SingleChip's "no filter" sentinel
   switch (key) {
     case 'remote':
-      return raw && raw !== 'any' ? `remote_policy = ${bind(raw)}` : null;
+      return `remote_policy = ${bind(raw)}`;
     case 'loc': {
       const a = splitCsv(raw);
       return a.length ? `locations && ${bind(a)}::text[]` : null;
