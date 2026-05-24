@@ -4,7 +4,7 @@ import { browse, BROWSE_PAGE_SIZE } from '@/lib/queries';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const ALLOWED = new Set(['remote', 'loc', 'seniority', 'tech', 'comp_min', 'q', 'contract']);
+const ALLOWED = new Set(['month', 'remote', 'loc', 'seniority', 'tech', 'comp_min', 'q', 'contract']);
 
 export async function GET(req: Request) {
   const url = new URL(req.url);

@@ -1,4 +1,5 @@
 export const FILTER_KEYS = [
+  'month',
   'remote',
   'seniority',
   'tech',

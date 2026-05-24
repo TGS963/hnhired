@@ -22,31 +22,14 @@ const filterSpecGeminiSchema = {
   },
 };
 
-const whySchema = {
-  type: Type.OBJECT,
-  properties: {
-    results: {
-      type: Type.ARRAY,
-      items: {
-        type: Type.OBJECT,
-        properties: {
-          post_raw_id: { type: Type.NUMBER },
-          why: { type: Type.STRING },
-        },
-        required: ['post_raw_id', 'why'],
-      },
-    },
-  },
-  required: ['results'],
-};
-
 function vecLit(v: number[]): string {
   return '[' + v.join(',') + ']';
 }
 
 export async function nlSearch(
   q: string,
-): Promise<{ posts: Post[]; whyByPostId: Record<number, string> }> {
+  explicit?: URLSearchParams,
+): Promise<{ posts: Post[] }> {
   const rawSpec = await generateJson<unknown>(
     `Translate this natural-language job search into a FilterSpec JSON.\n\nQuery: ${q}`,
     filterSpecGeminiSchema,
@@ -65,19 +48,68 @@ export async function nlSearch(
     return `$${vals.length}`;
   };
 
-  if (spec.remote_policy) where.push(`remote_policy = ${bind(spec.remote_policy)}`);
-  if (spec.locations_any?.length)
+  // LLM-derived filters — skipped for any dimension the user explicitly overrode
+  if (!explicit?.get('remote') && spec.remote_policy)
+    where.push(`remote_policy = ${bind(spec.remote_policy)}`);
+  if (!explicit?.get('loc') && spec.locations_any?.length)
     where.push(`locations && ${bind(spec.locations_any)}::text[]`);
-  if (spec.seniority_any?.length)
+  if (!explicit?.get('seniority') && spec.seniority_any?.length)
     where.push(`seniority && ${bind(spec.seniority_any)}::text[]`);
-  if (spec.tech_any?.length) where.push(`tech_stack && ${bind(spec.tech_any)}::text[]`);
-  if (spec.contract_type) where.push(`contract_type = ${bind(spec.contract_type)}`);
-  if (typeof spec.salary_min === 'number')
+  if (!explicit?.get('tech') && spec.tech_any?.length)
+    where.push(`tech_stack && ${bind(spec.tech_any)}::text[]`);
+  if (!explicit?.get('contract') && spec.contract_type)
+    where.push(`contract_type = ${bind(spec.contract_type)}`);
+  if (!explicit?.get('comp_min') && typeof spec.salary_min === 'number')
     where.push(`salary_min >= ${bind(spec.salary_min)}`);
+  // visa / equity have no FilterBar UI — always use LLM inference
   if (typeof spec.visa_sponsorship === 'boolean')
     where.push(`visa_sponsorship = ${bind(spec.visa_sponsorship)}`);
-  if (typeof spec.equity === 'boolean') where.push(`equity = ${bind(spec.equity)}`);
-  if (spec.keyword) where.push(`raw_text ILIKE '%' || ${bind(spec.keyword)} || '%'`);
+  if (typeof spec.equity === 'boolean')
+    where.push(`equity = ${bind(spec.equity)}`);
+  if (spec.keyword)
+    where.push(`raw_text ILIKE '%' || ${bind(spec.keyword)} || '%'`);
+
+  // Explicit FilterBar overrides — always applied, take priority over LLM inference
+  if (explicit) {
+    const CONTRACT_TYPES = new Set(['fulltime', 'parttime', 'contract', 'intern']);
+    const MONTH_RE = /^\d{4}-(?:0[1-9]|1[0-2])$/;
+
+    const rawRemote = explicit.get('remote');
+    if (rawRemote && rawRemote !== 'any')
+      where.push(`remote_policy = ${bind(rawRemote)}`);
+
+    const rawLoc = explicit.get('loc');
+    if (rawLoc) {
+      const locs = rawLoc.split(',').map((s) => s.trim()).filter(Boolean);
+      if (locs.length) where.push(`locations && ${bind(locs)}::text[]`);
+    }
+
+    const rawSeniority = explicit.get('seniority');
+    if (rawSeniority) {
+      const terms = rawSeniority.split(',').map((s) => s.trim()).filter(Boolean);
+      if (terms.length) where.push(`seniority && ${bind(terms)}::text[]`);
+    }
+
+    const rawTech = explicit.get('tech');
+    if (rawTech) {
+      const terms = rawTech.split(',').map((s) => s.trim()).filter(Boolean);
+      if (terms.length) where.push(`tech_stack && ${bind(terms)}::text[]`);
+    }
+
+    const rawCompMin = explicit.get('comp_min');
+    const compN = Number(rawCompMin);
+    if (rawCompMin && Number.isFinite(compN)) where.push(`salary_min >= ${bind(compN)}`);
+
+    const rawContract = explicit.get('contract');
+    if (rawContract && CONTRACT_TYPES.has(rawContract))
+      where.push(`contract_type = ${bind(rawContract)}`);
+
+    const rawMonth = explicit.get('month');
+    if (rawMonth && MONTH_RE.test(rawMonth))
+      where.push(
+        `story_id = (SELECT id FROM stories WHERE date_trunc('month', month) = date_trunc('month', ${bind(rawMonth + '-01')}::date) LIMIT 1)`,
+      );
+  }
 
   let orderBy = 'posted_at DESC';
   if (spec.semantic_query) {
@@ -94,26 +126,5 @@ export async function nlSearch(
   `;
   const posts = await query<Post>(sql, vals);
 
-  const whyByPostId: Record<number, string> = {};
-  if (posts.length) {
-    const summarized = posts.map((p) => ({
-      id: Number(p.post_raw_id),
-      company: p.company,
-      role_titles: p.role_titles,
-      summary_1line: p.summary_1line,
-    }));
-    const why = await generateJson<{ results: { post_raw_id: number; why: string }[] }>(
-      `FilterSpec:\n${JSON.stringify(spec)}\n\nPostings:\n${JSON.stringify(summarized)}\n\nFor each posting, write a one-sentence explanation of why it matches the spec.`,
-      whySchema,
-      {
-        system:
-          'You explain, per posting, why it matches the user FilterSpec. Be concrete and concise.',
-      },
-    );
-    for (const r of why.results ?? []) {
-      whyByPostId[Number(r.post_raw_id)] = r.why;
-    }
-  }
-
-  return { posts, whyByPostId };
+  return { posts };
 }

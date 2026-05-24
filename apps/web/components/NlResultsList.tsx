@@ -6,11 +6,10 @@ import { useSearchPending } from './search-pending';
 
 type Props = {
   results: JobCardRow[];
-  whyByPostId: Record<string, string>;
   error?: string | null;
 };
 
-export default function NlResultsList({ results, whyByPostId, error }: Props) {
+export default function NlResultsList({ results, error }: Props) {
   const { isPending } = useSearchPending();
 
   if (isPending) {
@@ -45,8 +44,6 @@ export default function NlResultsList({ results, whyByPostId, error }: Props) {
         <JobRow
           key={String(row.post_raw_id)}
           row={row}
-          why={whyByPostId[String(row.post_raw_id)]}
-          whyLabel="why"
         />
       ))}
     </div>

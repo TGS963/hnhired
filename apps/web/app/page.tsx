@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import { nlSearch } from '@/lib/search';
 import { browse, browseCount, BROWSE_PAGE_SIZE } from '@/lib/queries';
+import { getAvailableMonths } from '@/lib/stories-api';
 import SearchBar from '@/components/SearchBar';
 import FilterBar from '@/components/FilterBar';
 import InfiniteJobList from '@/components/InfiniteJobList';
@@ -24,11 +25,12 @@ type SearchParams = {
   tech?: string;
   comp_min?: string;
   contract?: string;
+  month?: string;
   nl?: string;
   saved?: string;
 };
 
-const BROWSE_KEYS = ['q', 'remote', 'loc', 'seniority', 'tech', 'comp_min', 'contract'] as const;
+const BROWSE_KEYS = ['month', 'q', 'remote', 'loc', 'seniority', 'tech', 'comp_min', 'contract'] as const;
 
 export default async function Page({
   searchParams,
@@ -41,22 +43,34 @@ export default async function Page({
   const initialLayout: Layout = layoutCookie === 'cards' ? 'cards' : 'rows';
 
   if (params.nl && params.nl.trim().length > 0) {
+    // Build explicit FilterBar params so nlSearch can respect them alongside LLM inference
+    const FILTER_KEYS_NL = ['remote', 'loc', 'seniority', 'tech', 'comp_min', 'contract', 'month'] as const;
+    const nlFilters = new URLSearchParams();
+    for (const key of FILTER_KEYS_NL) {
+      const v = params[key];
+      if (typeof v === 'string' && v) nlFilters.set(key, v);
+    }
+    const hasFilters = nlFilters.toString().length > 0;
+
     let results: JobCardRow[] = [];
-    let whyByPostId: Record<string, string> = {};
     let nlError: string | null = null;
-    try {
-      const res = await nlSearch(params.nl);
-      results = (res?.posts ?? []) as JobCardRow[];
-      whyByPostId = (res?.whyByPostId ?? {}) as Record<string, string>;
-    } catch (err) {
-      console.error('nlSearch failed:', err);
+    // Parallelise months fetch with the AI search call
+    const [nlRes, months] = await Promise.allSettled([
+      nlSearch(params.nl, hasFilters ? nlFilters : undefined),
+      getAvailableMonths(),
+    ]);
+    if (nlRes.status === 'fulfilled') {
+      results = (nlRes.value?.posts ?? []) as JobCardRow[];
+    } else {
+      console.error('nlSearch failed:', nlRes.reason);
       nlError = 'AI search is temporarily unavailable. Try Keyword mode instead.';
     }
+    const monthList = months.status === 'fulfilled' ? months.value : [];
     return (
       <>
         <SearchBar />
-        <FilterBar defaultValues={params} />
-        <NlResultsList results={results} whyByPostId={whyByPostId} error={nlError} />
+        <FilterBar defaultValues={params} months={monthList} />
+        <NlResultsList results={results} error={nlError} />
       </>
     );
   }
@@ -72,9 +86,10 @@ export default async function Page({
   }
 
   const savedOnly = params.saved === '1';
-  const [initial, total] = await Promise.all([
+  const [initial, total, months] = await Promise.all([
     browse(usp, { limit: BROWSE_PAGE_SIZE, offset: 0 }) as Promise<JobCardRow[]>,
     browseCount(usp),
+    getAvailableMonths(),
   ]);
   const initialNextOffset = initial.length === BROWSE_PAGE_SIZE ? BROWSE_PAGE_SIZE : null;
   const searchKey = usp.toString() + (savedOnly ? '|saved' : '');
@@ -82,7 +97,7 @@ export default async function Page({
   return (
     <>
       <SearchBar />
-      <FilterBar defaultValues={params} />
+      <FilterBar defaultValues={params} months={months} />
       <InfiniteJobList
         key={searchKey}
         initial={initial}
