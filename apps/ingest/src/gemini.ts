@@ -76,7 +76,7 @@ const responseSchema = {
 const MAX_INPUT_CHARS = 24000;
 const MAX_OUTPUT_TOKENS = 2048;
 
-export async function extractStructured(text: string): Promise<Extraction> {
+export async function extractStructured(text: string, temperature = 0): Promise<Extraction> {
   const res = await ai.models.generateContent({
     model: EXTRACT_MODEL,
     contents: [{ role: 'user', parts: [{ text: text.slice(0, MAX_INPUT_CHARS) }] }],
@@ -84,7 +84,7 @@ export async function extractStructured(text: string): Promise<Extraction> {
       systemInstruction: SYSTEM,
       responseMimeType: 'application/json',
       responseSchema,
-      temperature: 0,
+      temperature,
       maxOutputTokens: MAX_OUTPUT_TOKENS,
     },
   });

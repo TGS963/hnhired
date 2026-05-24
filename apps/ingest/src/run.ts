@@ -87,9 +87,13 @@ async function main() {
       const postId = row.hn_item_id;
       let ex: Extraction | null = null;
       let err: string | null = null;
-      for (let attempt = 0; attempt < 2 && !ex; attempt++) {
+      // First attempt deterministic; later attempts add temperature to break
+      // degenerate repetition loops that truncate the structured output.
+      const retryTemperatures = [0, 0.4, 0.8];
+      for (const temperature of retryTemperatures) {
+        if (ex) break;
         try {
-          ex = await extractStructured(row.text);
+          ex = await extractStructured(row.text, temperature);
           err = null;
         } catch (e: any) {
           err = String(e?.message ?? e);
