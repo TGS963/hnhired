@@ -1,8 +1,6 @@
 # hn-hired-ai
 
-AI-powered alternative to the stale `hnhired.fly.dev`. Scrapes HN "Who is hiring?" threads, extracts structured fields with Gemini 3.5 Flash, serves NL search + résumé matching via Gemini 3 Pro.
-
-See `hnhired-fly-dev-kinda-stopped-working-cozy-creek.md` for the full plan.
+AI-powered alternative to the stale `hnhired.fly.dev`. Scrapes HN "Who is hiring?" threads, extracts structured fields with Gemini 3.5 Flash, serves NL search + résumé matching via Gemini 3.5 Flash.
 
 ## Stack
 
