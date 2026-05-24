@@ -73,17 +73,24 @@ const responseSchema = {
   ],
 };
 
+const MAX_INPUT_CHARS = 24000;
+const MAX_OUTPUT_TOKENS = 2048;
+
 export async function extractStructured(text: string): Promise<Extraction> {
   const res = await ai.models.generateContent({
     model: EXTRACT_MODEL,
-    contents: [{ role: 'user', parts: [{ text }] }],
+    contents: [{ role: 'user', parts: [{ text: text.slice(0, MAX_INPUT_CHARS) }] }],
     config: {
       systemInstruction: SYSTEM,
       responseMimeType: 'application/json',
       responseSchema,
       temperature: 0,
+      maxOutputTokens: MAX_OUTPUT_TOKENS,
     },
   });
+  if (res.candidates?.[0]?.finishReason === 'MAX_TOKENS') {
+    throw new Error('gemini output truncated at maxOutputTokens');
+  }
   const raw = res.text;
   if (!raw) throw new Error('empty gemini response');
   const parsed = JSON.parse(raw);
