@@ -22,8 +22,10 @@ function vectorLiteral(v: number[]): string {
 }
 
 async function main() {
-  const client = new pg.Client({ connectionString: DATABASE_URL });
-  await client.connect();
+  const pool = new pg.Pool({
+    connectionString: DATABASE_URL,
+    max: Number(process.env.EXTRACT_CONCURRENCY ?? 8) + 2,
+  });
 
   let stories_seen = 0;
   let posts_raw_new = 0;
@@ -37,13 +39,13 @@ async function main() {
     stories_seen = stories.length;
 
     for (const s of stories) {
-      await client.query(
+      await pool.query(
         `INSERT INTO stories (hn_item_id, month, fetched_at)
          VALUES ($1, $2, now())
          ON CONFLICT (hn_item_id) DO NOTHING`,
         [s.id, s.month],
       );
-      const sid = await client.query<{ id: string }>(
+      const sid = await pool.query<{ id: string }>(
         `SELECT id FROM stories WHERE hn_item_id = $1`,
         [s.id],
       );
@@ -56,7 +58,7 @@ async function main() {
       });
 
       for (const c of comments) {
-        const r = await client.query(
+        const r = await pool.query(
           `INSERT INTO posts_raw (hn_item_id, story_id, author, posted_at, text, fetched_at)
            VALUES ($1, $2, $3, to_timestamp($4), $5, now())
            ON CONFLICT (hn_item_id) DO NOTHING`,
@@ -66,7 +68,7 @@ async function main() {
       }
     }
 
-    const pending = await client.query<{ hn_item_id: string; text: string }>(
+    const pending = await pool.query<{ hn_item_id: string; text: string }>(
       `SELECT pr.hn_item_id, pr.text
        FROM posts_raw pr
        WHERE NOT EXISTS (
@@ -96,7 +98,7 @@ async function main() {
 
       if (!ex) {
         extractions_failed++;
-        await client.query(
+        await pool.query(
           `INSERT INTO posts_extractions
              (post_raw_id, extractor_version, extracted_at, extraction_failed, failure_reason)
            VALUES ($1, $2, now(), true, $3)
@@ -119,7 +121,7 @@ async function main() {
         }
       }
 
-      const ins = await client.query(
+      const ins = await pool.query(
         `INSERT INTO posts_extractions (
            post_raw_id, extractor_version, extracted_at, extraction_failed,
            is_job_posting,
@@ -181,13 +183,13 @@ async function main() {
     );
 
     for (const c of canonicals) {
-      await client.query(
+      await pool.query(
         `INSERT INTO companies (canonical_name, display_name, post_count, first_seen, last_seen)
          VALUES ($1, $2, 0, now(), now())
          ON CONFLICT (canonical_name) DO NOTHING`,
         [c.canonical, c.display],
       );
-      await client.query(
+      await pool.query(
         `INSERT INTO companies_aliases (raw_name, canonical_name)
          VALUES ($1, $2)
          ON CONFLICT (raw_name) DO NOTHING`,
@@ -196,7 +198,7 @@ async function main() {
     }
 
     // Recompute company stats from posts_extractions — idempotent across reruns.
-    await client.query(`
+    await pool.query(`
       WITH stats AS (
         SELECT canonical_company AS canonical_name,
                COUNT(*)::int AS cnt,
@@ -226,7 +228,7 @@ async function main() {
       process.exit(1);
     }
   } finally {
-    await client.end();
+    await pool.end();
   }
 }
 
