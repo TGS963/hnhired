@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Check, X, ChevronDown } from 'lucide-react';
 import { CHIP_BASE, CHIP_ACTIVE, CHIP_INACTIVE } from '@/lib/ui';
 import type { StoryMonth } from '@/lib/stories-api';
@@ -188,18 +188,18 @@ export default function FilterBar({
   );
 }
 
-function SingleChip({
+function ChipShell({
   label,
-  value,
-  options,
-  onChange,
+  isActive,
+  valueText,
   onClear,
+  children,
 }: {
   label: string;
-  value: string;
-  options: Option[];
-  onChange: (v: string) => void;
+  isActive: boolean;
+  valueText?: string;
   onClear: () => void;
+  children: (close: () => void) => ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -211,95 +211,6 @@ function SingleChip({
     document.addEventListener('mousedown', onDoc);
     return () => document.removeEventListener('mousedown', onDoc);
   }, []);
-
-  const isActive = !!value && value !== 'any';
-  const valueLabel = options.find((o) => o.id === value)?.label;
-
-  return (
-    <div className="relative inline-flex items-center" ref={ref}>
-      {isActive ? (
-        <div className={`${CHIP_BASE} ${CHIP_ACTIVE} pr-1`}>
-          <button
-            type="button"
-            className="inline-flex items-center gap-1.5 p-0 bg-transparent border-0 cursor-pointer text-inherit"
-            onClick={() => setOpen((v) => !v)}
-          >
-            <span className="text-fg-muted">{label}</span>
-            <span className={CHIP_VALUE}>{valueLabel}</span>
-          </button>
-          <button
-            type="button"
-            className={CHIP_CLEAR}
-            onClick={(e) => {
-              e.stopPropagation();
-              onClear();
-            }}
-            aria-label="Clear"
-          >
-            <X size={11} />
-          </button>
-        </div>
-      ) : (
-        <button
-          type="button"
-          className={`${CHIP_BASE} ${CHIP_INACTIVE}`}
-          onClick={() => setOpen((v) => !v)}
-        >
-          <span>{label}</span>
-          <ChevronDown size={10} />
-        </button>
-      )}
-      {open && (
-        <div className={POPOVER}>
-          {options.map((opt) => {
-            const active = value === opt.id || (!value && opt.id === 'any');
-            return (
-              <button
-                key={opt.id}
-                type="button"
-                className={`${POPOVER_ITEM_BASE} ${active ? 'text-brand' : 'text-fg'}`}
-                onClick={() => {
-                  onChange(opt.id);
-                  setOpen(false);
-                }}
-              >
-                {opt.label}
-                {active && <Check size={12} />}
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function MultiChip({
-  label,
-  values,
-  options,
-  onToggle,
-  onClear,
-}: {
-  label: string;
-  values: string[];
-  options: string[];
-  onToggle: (v: string) => void;
-  onClear: () => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function onDoc(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    document.addEventListener('mousedown', onDoc);
-    return () => document.removeEventListener('mousedown', onDoc);
-  }, []);
-
-  const isActive = values.length > 0;
-  const valueText = values.length === 1 ? values[0] : `${values.length} selected`;
 
   return (
     <div className="relative inline-flex items-center" ref={ref}>
@@ -335,24 +246,86 @@ function MultiChip({
           <ChevronDown size={10} />
         </button>
       )}
-      {open && (
-        <div className={POPOVER}>
-          {options.map((opt) => {
-            const active = values.includes(opt);
-            return (
-              <button
-                key={opt}
-                type="button"
-                className={`${POPOVER_ITEM_BASE} ${active ? 'text-brand' : 'text-fg'}`}
-                onClick={() => onToggle(opt)}
-              >
-                {opt}
-                {active && <Check size={12} />}
-              </button>
-            );
-          })}
-        </div>
-      )}
+      {open && <div className={POPOVER}>{children(() => setOpen(false))}</div>}
     </div>
+  );
+}
+
+function SingleChip({
+  label,
+  value,
+  options,
+  onChange,
+  onClear,
+}: {
+  label: string;
+  value: string;
+  options: Option[];
+  onChange: (v: string) => void;
+  onClear: () => void;
+}) {
+  const isActive = !!value && value !== 'any';
+  const valueLabel = options.find((o) => o.id === value)?.label;
+
+  return (
+    <ChipShell label={label} isActive={isActive} valueText={valueLabel} onClear={onClear}>
+      {(close) =>
+        options.map((opt) => {
+          const active = value === opt.id || (!value && opt.id === 'any');
+          return (
+            <button
+              key={opt.id}
+              type="button"
+              className={`${POPOVER_ITEM_BASE} ${active ? 'text-brand' : 'text-fg'}`}
+              onClick={() => {
+                onChange(opt.id);
+                close();
+              }}
+            >
+              {opt.label}
+              {active && <Check size={12} />}
+            </button>
+          );
+        })
+      }
+    </ChipShell>
+  );
+}
+
+function MultiChip({
+  label,
+  values,
+  options,
+  onToggle,
+  onClear,
+}: {
+  label: string;
+  values: string[];
+  options: string[];
+  onToggle: (v: string) => void;
+  onClear: () => void;
+}) {
+  const isActive = values.length > 0;
+  const valueText = values.length === 1 ? values[0] : `${values.length} selected`;
+
+  return (
+    <ChipShell label={label} isActive={isActive} valueText={valueText} onClear={onClear}>
+      {() =>
+        options.map((opt) => {
+          const active = values.includes(opt);
+          return (
+            <button
+              key={opt}
+              type="button"
+              className={`${POPOVER_ITEM_BASE} ${active ? 'text-brand' : 'text-fg'}`}
+              onClick={() => onToggle(opt)}
+            >
+              {opt}
+              {active && <Check size={12} />}
+            </button>
+          );
+        })
+      }
+    </ChipShell>
   );
 }
