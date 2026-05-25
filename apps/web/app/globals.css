@@ -15,6 +15,7 @@
   --bg:           oklch(0.995 0.001 260);
   --bg-2:         oklch(0.97  0.002 260);
   --surface:      oklch(1     0     0  );
+  --panel:        oklch(0.965 0.003 260);
   --fg:           oklch(0.20  0.015 260);
   --fg-muted:     oklch(0.50  0.012 260);
   --fg-faint:     oklch(0.68  0.010 260);
@@ -53,14 +54,15 @@
 
 [data-theme="dark"] {
   --brand: oklch(0.58 0.16 60);
-  --brand-soft: color-mix(in oklch, var(--brand) 12%, transparent);
-  --brand-soft-strong: color-mix(in oklch, var(--brand) 22%, transparent);
+  --brand-soft: color-mix(in oklch, var(--brand) 22%, transparent);
+  --brand-soft-strong: color-mix(in oklch, var(--brand) 36%, transparent);
   --brand-hover: color-mix(in oklch, var(--brand) 85%, black);
   --brand-contrast: oklch(0.98 0.005 260);
 
   --bg:           oklch(0.15  0.008 260);
   --bg-2:         oklch(0.18  0.010 260);
   --surface:      oklch(0.19  0.010 260);
+  --panel:        oklch(0.255 0.012 260);
   --fg:           oklch(0.96  0.005 260);
   --fg-muted:     oklch(0.65  0.012 260);
   --fg-faint:     oklch(0.45  0.012 260);
@@ -127,6 +129,7 @@
   --color-bg: var(--bg);
   --color-bg-2: var(--bg-2);
   --color-surface: var(--surface);
+  --color-panel: var(--panel);
   --color-hover: var(--hover);
   --color-border-c: var(--border-c);
   --color-border-strong: var(--border-strong);

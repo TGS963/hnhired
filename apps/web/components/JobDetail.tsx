@@ -110,7 +110,7 @@ export default function JobDetail({
       </header>
 
       {p.summary_1line && (
-        <aside className="relative bg-bg-2 border-l-2 border-brand m-0 mb-6 px-5 py-4 rounded-r-lg">
+        <aside className="relative bg-panel border-l-2 border-brand m-0 mb-6 px-5 py-4 rounded-r-lg">
           <span className="inline-flex items-center gap-[5px] font-mono text-[10.5px] uppercase tracking-[0.05em] text-brand mb-1.5">◇ AI summary</span>
           <p className="m-0 text-[15px] leading-[1.55] text-fg">{p.summary_1line}</p>
         </aside>
@@ -219,7 +219,7 @@ export default function JobDetail({
             <span>Original HN comment</span>
             <span className="font-mono text-fg-faint text-[11px]">collapse</span>
           </summary>
-          <pre className="mt-3 mb-0 px-5 py-4 bg-bg-2 rounded-lg font-sans text-[13px] leading-[1.55] text-fg-muted whitespace-pre-wrap break-words">{p.raw_text}</pre>
+          <pre className="mt-3 mb-0 px-5 py-4 bg-panel rounded-lg font-sans text-[13px] leading-[1.55] text-fg-muted whitespace-pre-wrap break-words">{p.raw_text}</pre>
         </details>
       )}
 
