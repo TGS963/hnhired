@@ -65,6 +65,9 @@ const POPOVER_ITEM_BASE =
 const CHIP_VALUE =
   'font-medium text-brand dark:text-[color:color-mix(in_oklch,var(--brand)_70%,white)]';
 
+const CHIP_CLEAR =
+  '-mr-0.5 w-[17px] h-[17px] rounded-[4px] inline-flex items-center justify-center text-fg-muted bg-transparent border-0 cursor-pointer hover:text-fg hover:bg-hover';
+
 export default function FilterBar({
   defaultValues,
   months,
@@ -214,29 +217,36 @@ function SingleChip({
 
   return (
     <div className="relative inline-flex items-center" ref={ref}>
-      <button
-        type="button"
-        className={`${CHIP_BASE} ${isActive ? CHIP_ACTIVE : CHIP_INACTIVE}`}
-        onClick={() => setOpen((v) => !v)}
-      >
-        <span className={isActive ? 'text-fg-muted' : ''}>{label}</span>
-        {isActive ? (
-          <span className={CHIP_VALUE}>{valueLabel}</span>
-        ) : (
-          <ChevronDown size={10} />
-        )}
-      </button>
-      {isActive && (
+      {isActive ? (
+        <div className={`${CHIP_BASE} ${CHIP_ACTIVE} pr-1`}>
+          <button
+            type="button"
+            className="inline-flex items-center gap-1.5 p-0 bg-transparent border-0 cursor-pointer text-inherit"
+            onClick={() => setOpen((v) => !v)}
+          >
+            <span className="text-fg-muted">{label}</span>
+            <span className={CHIP_VALUE}>{valueLabel}</span>
+          </button>
+          <button
+            type="button"
+            className={CHIP_CLEAR}
+            onClick={(e) => {
+              e.stopPropagation();
+              onClear();
+            }}
+            aria-label="Clear"
+          >
+            <X size={11} />
+          </button>
+        </div>
+      ) : (
         <button
           type="button"
-          className="-ml-1 w-[18px] h-[18px] rounded-[4px] inline-flex items-center justify-center text-fg-muted bg-transparent border-0 cursor-pointer hover:text-fg hover:bg-hover"
-          onClick={(e) => {
-            e.stopPropagation();
-            onClear();
-          }}
-          aria-label="Clear"
+          className={`${CHIP_BASE} ${CHIP_INACTIVE}`}
+          onClick={() => setOpen((v) => !v)}
         >
-          <X size={12} />
+          <span>{label}</span>
+          <ChevronDown size={10} />
         </button>
       )}
       {open && (
@@ -293,29 +303,36 @@ function MultiChip({
 
   return (
     <div className="relative inline-flex items-center" ref={ref}>
-      <button
-        type="button"
-        className={`${CHIP_BASE} ${isActive ? CHIP_ACTIVE : CHIP_INACTIVE}`}
-        onClick={() => setOpen((v) => !v)}
-      >
-        <span className={isActive ? 'text-fg-muted' : ''}>{label}</span>
-        {isActive ? (
-          <span className={CHIP_VALUE}>{valueText}</span>
-        ) : (
-          <ChevronDown size={10} />
-        )}
-      </button>
-      {isActive && (
+      {isActive ? (
+        <div className={`${CHIP_BASE} ${CHIP_ACTIVE} pr-1`}>
+          <button
+            type="button"
+            className="inline-flex items-center gap-1.5 p-0 bg-transparent border-0 cursor-pointer text-inherit"
+            onClick={() => setOpen((v) => !v)}
+          >
+            <span className="text-fg-muted">{label}</span>
+            <span className={CHIP_VALUE}>{valueText}</span>
+          </button>
+          <button
+            type="button"
+            className={CHIP_CLEAR}
+            onClick={(e) => {
+              e.stopPropagation();
+              onClear();
+            }}
+            aria-label="Clear"
+          >
+            <X size={11} />
+          </button>
+        </div>
+      ) : (
         <button
           type="button"
-          className="-ml-1 w-[18px] h-[18px] rounded-[4px] inline-flex items-center justify-center text-fg-muted bg-transparent border-0 cursor-pointer hover:text-fg hover:bg-hover"
-          onClick={(e) => {
-            e.stopPropagation();
-            onClear();
-          }}
-          aria-label="Clear"
+          className={`${CHIP_BASE} ${CHIP_INACTIVE}`}
+          onClick={() => setOpen((v) => !v)}
         >
-          <X size={12} />
+          <span>{label}</span>
+          <ChevronDown size={10} />
         </button>
       )}
       {open && (
