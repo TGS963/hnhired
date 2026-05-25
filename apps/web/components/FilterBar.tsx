@@ -44,18 +44,7 @@ const SENIORITY_OPTS: Option[] = [
   { id: 'principal', label: 'Principal' },
 ];
 
-const STACK_OPTS = [
-  'python',
-  'typescript',
-  'rust',
-  'go',
-  'java',
-  'react',
-  'kubernetes',
-  'postgres',
-  'aws',
-  'ml',
-];
+const PINNED_POPULAR_STACK_COUNT = 8;
 
 const POPOVER =
   'absolute top-[calc(100%+4px)] left-0 min-w-[180px] max-h-[320px] overflow-y-auto bg-surface border border-border-c rounded-lg shadow-[var(--shadow-pop)] p-1 z-30';
@@ -68,12 +57,17 @@ const CHIP_VALUE =
 const CHIP_CLEAR =
   '-mr-0.5 w-[17px] h-[17px] rounded-[4px] inline-flex items-center justify-center text-fg-muted bg-transparent border-0 cursor-pointer hover:text-fg hover:bg-hover';
 
+const STACK_GROUP_LABEL =
+  'px-2 pt-2 pb-1 text-[10.5px] font-mono uppercase tracking-[0.05em] text-fg-faint';
+
 export default function FilterBar({
   defaultValues,
   months,
+  stackOptions,
 }: {
   defaultValues: Values;
   months: StoryMonth[];
+  stackOptions: string[];
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -159,13 +153,15 @@ export default function FilterBar({
           onChange={(v) => setParam('seniority', v)}
           onClear={() => setParam('seniority', null)}
         />
-        <MultiChip
-          label="Stack"
-          values={techList}
-          options={STACK_OPTS}
-          onToggle={toggleTech}
-          onClear={() => setParam('tech', null)}
-        />
+        {stackOptions.length > 0 && (
+          <MultiChip
+            label="Stack"
+            values={techList}
+            options={stackOptions}
+            onToggle={toggleTech}
+            onClear={() => setParam('tech', null)}
+          />
+        )}
         <div className="flex-1 min-w-[12px]" />
         <button
           type="button"
@@ -310,22 +306,75 @@ function MultiChip({
 
   return (
     <ChipShell label={label} isActive={isActive} valueText={valueText} onClear={onClear}>
-      {() =>
-        options.map((opt) => {
-          const active = values.includes(opt);
-          return (
-            <button
-              key={opt}
-              type="button"
-              className={`${POPOVER_ITEM_BASE} ${active ? 'text-brand' : 'text-fg'}`}
-              onClick={() => onToggle(opt)}
-            >
-              {opt}
-              {active && <Check size={12} />}
-            </button>
-          );
-        })
-      }
+      {() => <StackOptions options={options} values={values} onToggle={onToggle} />}
     </ChipShell>
+  );
+}
+
+function StackOptions({
+  options,
+  values,
+  onToggle,
+}: {
+  options: string[];
+  values: string[];
+  onToggle: (v: string) => void;
+}) {
+  const [searchTerm, setSearchTerm] = useState('');
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+
+  const renderOption = (option: string) => {
+    const selected = values.includes(option);
+    return (
+      <button
+        key={option}
+        type="button"
+        className={`${POPOVER_ITEM_BASE} ${selected ? 'text-brand' : 'text-fg'}`}
+        onClick={() => onToggle(option)}
+      >
+        {option}
+        {selected && <Check size={12} />}
+      </button>
+    );
+  };
+
+  const pinnedByPopularity = options.slice(0, PINNED_POPULAR_STACK_COUNT);
+  const remainingAlphabetical = options
+    .slice(PINNED_POPULAR_STACK_COUNT)
+    .sort((a, b) => a.localeCompare(b));
+
+  const searchMatches = normalizedSearch
+    ? options.filter((option) => option.toLowerCase().includes(normalizedSearch))
+    : null;
+
+  return (
+    <>
+      <input
+        autoFocus
+        aria-label="Filter stack options"
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        placeholder="Filter…"
+        className="sticky top-0 z-10 w-full mb-1 px-2 py-1.5 rounded-[5px] text-[13px] bg-bg-2 border border-border-c text-fg placeholder:text-fg-faint outline-none focus:border-brand"
+      />
+      {searchMatches ? (
+        searchMatches.length > 0 ? (
+          searchMatches.map(renderOption)
+        ) : (
+          <div className="px-2 py-1.5 text-[13px] text-fg-faint">No matches</div>
+        )
+      ) : (
+        <>
+          <div className={STACK_GROUP_LABEL}>Popular</div>
+          {pinnedByPopularity.map(renderOption)}
+          {remainingAlphabetical.length > 0 && (
+            <>
+              <div className={STACK_GROUP_LABEL}>All</div>
+              {remainingAlphabetical.map(renderOption)}
+            </>
+          )}
+        </>
+      )}
+    </>
   );
 }

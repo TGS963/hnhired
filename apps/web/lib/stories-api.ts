@@ -1,3 +1,4 @@
+import { unstable_cache } from 'next/cache';
 import { query } from './db';
 
 export type StoryMonth = {
@@ -30,3 +31,31 @@ export async function getAvailableMonths(): Promise<StoryMonth[]> {
     return { id, label };
   });
 }
+
+// Returns tags in their stored mixed-case (e.g. "Go", "AWS") for display;
+// the `tech` filter itself matches case-insensitively, so casing here is
+// cosmetic only.
+const MIN_POSTS_PER_STACK_TAG = 5;
+const MAX_STACK_TAGS_IN_FILTER = 40;
+const STACK_FACETS_REVALIDATE_SECONDS = 3600;
+
+export const getStackFacetsByPopularity = unstable_cache(
+  async (): Promise<string[]> => {
+    const rows = await query<{ tech: string }>(
+      `SELECT tech FROM (
+         SELECT tech, COUNT(*) AS n
+           FROM posts, unnest(tech_stack) AS tech
+          WHERE tech_stack IS NOT NULL
+          GROUP BY tech
+         HAVING COUNT(*) >= $1
+          ORDER BY n DESC
+          LIMIT $2
+       ) t
+       ORDER BY n DESC`,
+      [MIN_POSTS_PER_STACK_TAG, MAX_STACK_TAGS_IN_FILTER],
+    );
+    return rows.map((r) => r.tech);
+  },
+  ['stack-facets'],
+  { revalidate: STACK_FACETS_REVALIDATE_SECONDS },
+);

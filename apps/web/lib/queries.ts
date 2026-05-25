@@ -12,6 +12,11 @@ export const BROWSE_PAGE_SIZE = 30;
 const escapeLike = (s: string) => s.replace(/[\\%_]/g, (m) => `\\${m}`);
 const splitCsv = (raw: string) => raw.split(',').map((s) => s.trim()).filter(Boolean);
 
+export const techStackMatchClause = (values: string[], bind: (v: any) => string) =>
+  `EXISTS (SELECT 1 FROM unnest(tech_stack) AS t WHERE lower(t) = ANY(${bind(
+    values.map((v) => v.toLowerCase()),
+  )}::text[]))`;
+
 // Shared by browse() and nlSearch() so the two paths can't diverge.
 export function filterClause(
   key: string,
@@ -32,7 +37,7 @@ export function filterClause(
     }
     case 'tech': {
       const a = splitCsv(raw);
-      return a.length ? `tech_stack && ${bind(a)}::text[]` : null;
+      return a.length ? techStackMatchClause(a, bind) : null;
     }
     case 'comp_min': {
       const n = Number(raw);

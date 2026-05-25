@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import { nlSearch, EXPLICIT_DIMS } from '@/lib/search';
 import { browse, browseCount, BROWSE_PAGE_SIZE } from '@/lib/queries';
-import { getAvailableMonths } from '@/lib/stories-api';
+import { getAvailableMonths, getStackFacetsByPopularity } from '@/lib/stories-api';
 import SearchBar from '@/components/SearchBar';
 import FilterBar from '@/components/FilterBar';
 import InfiniteJobList from '@/components/InfiniteJobList';
@@ -52,9 +52,10 @@ export default async function Page({
 
     let results: JobCardRow[] = [];
     let nlError: string | null = null;
-    const [nlRes, months] = await Promise.allSettled([
+    const [nlRes, months, stack] = await Promise.allSettled([
       nlSearch(params.nl, hasFilters ? nlFilters : undefined),
       getAvailableMonths(),
+      getStackFacetsByPopularity(),
     ]);
     if (nlRes.status === 'fulfilled') {
       results = (nlRes.value?.posts ?? []) as JobCardRow[];
@@ -63,10 +64,11 @@ export default async function Page({
       nlError = 'AI search is temporarily unavailable. Try Keyword mode instead.';
     }
     const monthList = months.status === 'fulfilled' ? months.value : [];
+    const stackOptions = stack.status === 'fulfilled' ? stack.value : [];
     return (
       <>
         <SearchBar />
-        <FilterBar defaultValues={params} months={monthList} />
+        <FilterBar defaultValues={params} months={monthList} stackOptions={stackOptions} />
         <NlResultsList results={results} error={nlError} />
       </>
     );
@@ -83,18 +85,21 @@ export default async function Page({
   }
 
   const savedOnly = params.saved === '1';
-  const [initial, total, months] = await Promise.all([
+  const monthsPromise = getAvailableMonths().catch(() => []);
+  const stackOptionsPromise = getStackFacetsByPopularity().catch(() => []);
+  const [initial, total] = await Promise.all([
     browse(usp, { limit: BROWSE_PAGE_SIZE, offset: 0 }) as Promise<JobCardRow[]>,
     browseCount(usp),
-    getAvailableMonths(),
   ]);
+  const months = await monthsPromise;
+  const stackOptions = await stackOptionsPromise;
   const initialNextOffset = initial.length === BROWSE_PAGE_SIZE ? BROWSE_PAGE_SIZE : null;
   const searchKey = usp.toString() + (savedOnly ? '|saved' : '');
 
   return (
     <>
       <SearchBar />
-      <FilterBar defaultValues={params} months={months} />
+      <FilterBar defaultValues={params} months={months} stackOptions={stackOptions} />
       <InfiniteJobList
         key={searchKey}
         initial={initial}

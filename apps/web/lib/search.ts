@@ -1,6 +1,6 @@
 import { Type } from '@google/genai';
 import { query } from './db';
-import { filterClause } from './queries';
+import { filterClause, techStackMatchClause } from './queries';
 import { generateJson, embedText } from './gemini';
 import { FilterSpec, type Post } from './schemas';
 import { CANONICAL_COUNTRY_NAMES, COUNTRY_ALIAS_RULES } from '@hnhired/shared/countries';
@@ -78,7 +78,7 @@ export async function nlSearch(
   if (!overridden.has('seniority') && spec.seniority_any?.length)
     where.push(`seniority && ${bind(spec.seniority_any)}::text[]`);
   if (!overridden.has('tech') && spec.tech_any?.length)
-    where.push(`tech_stack && ${bind(spec.tech_any)}::text[]`);
+    where.push(techStackMatchClause(spec.tech_any, bind));
   if (!overridden.has('contract') && spec.contract_type)
     where.push(`contract_type = ${bind(spec.contract_type)}`);
   if (!overridden.has('comp_min') && typeof spec.salary_min === 'number')
