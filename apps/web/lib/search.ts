@@ -82,7 +82,9 @@ export async function nlSearch(
   if (!overridden.has('contract') && spec.contract_type)
     where.push(`contract_type = ${bind(spec.contract_type)}`);
   if (!overridden.has('comp_min') && typeof spec.salary_min === 'number')
-    where.push(`salary_min >= ${bind(spec.salary_min)}`);
+    where.push(
+      `(salary_min_usd >= ${bind(spec.salary_min)} OR (salary_min_usd IS NULL AND salary_min >= ${bind(spec.salary_min)}))`,
+    );
   // visa / equity have no FilterBar UI — always use LLM inference
   if (typeof spec.visa_sponsorship === 'boolean')
     where.push(`visa_sponsorship = ${bind(spec.visa_sponsorship)}`);

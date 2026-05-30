@@ -1,6 +1,7 @@
 import pg from 'pg';
 import { getWhoIsHiringStories, getTopLevelComments } from './fetchHn.js';
 import { extractStructured, embedText, type Extraction } from './gemini.js';
+import { fetchUsdRates, toUsd, type ExchangeRates } from '@hnhired/shared/currencies';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 if (!DATABASE_URL) throw new Error('DATABASE_URL required');
@@ -83,7 +84,7 @@ async function main() {
     console.log(`extraction phase: ${pendingTotal} comments to process (concurrency=${EXTRACT_CONCURRENCY})`);
     const startTs = Date.now();
 
-    async function processRow(row: { hn_item_id: string; text: string }) {
+    async function processRow(row: { hn_item_id: string; text: string }, rates: ExchangeRates) {
       const postId = row.hn_item_id;
       let ex: Extraction | null = null;
       let err: string | null = null;
@@ -125,28 +126,40 @@ async function main() {
         }
       }
 
+      const salaryMinUsd =
+        ex.salary_min != null && ex.currency
+          ? toUsd(ex.salary_min, ex.currency, rates)
+          : null;
+      const salaryMaxUsd =
+        ex.salary_max != null && ex.currency
+          ? toUsd(ex.salary_max, ex.currency, rates)
+          : null;
+
       const ins = await pool.query(
         `INSERT INTO posts_extractions (
            post_raw_id, extractor_version, extracted_at, extraction_failed,
            is_job_posting,
            company, canonical_company, role_titles, locations, remote_policy,
-           salary_min, salary_max, currency, equity, seniority, tech_stack,
+           salary_min, salary_max, currency, salary_min_usd, salary_max_usd,
+           equity, seniority, tech_stack,
            visa_sponsorship, contract_type, apply_url, apply_email, summary_1line,
            embedding
          ) VALUES (
            $1,$2,now(),false,
            $3,
            $4,$5,$6,$7,$8,
-           $9,$10,$11,$12,$13,$14,
-           $15,$16,$17,$18,$19,
-           ${embedding ? `$20::vector` : `NULL`}
+           $9,$10,$11,$12,$13,
+           $14,$15,$16,
+           $17,$18,$19,$20,$21,
+           ${embedding ? `$22::vector` : `NULL`}
          )
          ON CONFLICT (post_raw_id, extractor_version) DO NOTHING`,
         [
           postId, EXTRACTOR_VERSION,
           ex.is_job_posting,
           ex.company, canonical, ex.role_titles, ex.locations, ex.remote_policy,
-          ex.salary_min, ex.salary_max, ex.currency, ex.equity, ex.seniority, ex.tech_stack,
+          ex.salary_min, ex.salary_max, ex.currency, salaryMinUsd, salaryMaxUsd,
+          ex.equity, ex.seniority, ex.tech_stack,
           ex.visa_sponsorship, ex.contract_type, ex.apply_url, ex.apply_email, ex.summary_1line,
           ...(embedding ? [vectorLiteral(embedding)] : []),
         ],
@@ -160,13 +173,13 @@ async function main() {
     }
 
     let cursor = 0;
-    async function worker() {
+    async function worker(rates: ExchangeRates) {
       while (cursor < pending.rows.length) {
         const idx = cursor++;
         const row = pending.rows[idx]!;
         extractions_attempted++;
         try {
-          await processRow(row);
+          await processRow(row, rates);
         } catch (e) {
           console.error(`row ${row.hn_item_id} crashed:`, e);
         }
@@ -182,8 +195,18 @@ async function main() {
       }
     }
 
+    // Fetch live exchange rates once for the entire run (cached in memory).
+    let rates: ExchangeRates;
+    try {
+      rates = await fetchUsdRates();
+      console.log(`exchange rates fetched (${Object.keys(rates).length} currencies)`);
+    } catch (e) {
+      console.warn('Failed to fetch exchange rates — salary_usd columns will be null:', e);
+      rates = { USD: 1 }; // minimal fallback
+    }
+
     await Promise.all(
-      Array.from({ length: Math.max(1, EXTRACT_CONCURRENCY) }, () => worker()),
+      Array.from({ length: Math.max(1, EXTRACT_CONCURRENCY) }, () => worker(rates)),
     );
 
     for (const c of canonicals) {

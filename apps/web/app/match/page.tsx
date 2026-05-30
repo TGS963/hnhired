@@ -5,31 +5,11 @@ import Link from 'next/link';
 import ResumeEditor from '@/components/ResumeEditor';
 import { useResume } from '@/lib/useResume';
 import type { JobCardRow } from '@/components/JobCard';
+import { formatSalary } from '@/lib/salary';
 
 type MatchResult = JobCardRow & {
   fit_note: string;
 };
-
-function formatSalary(row: JobCardRow): string | null {
-  if (row.salary_min == null && row.salary_max == null) return null;
-  const sym =
-    row.currency === 'USD'
-      ? '$'
-      : row.currency === 'EUR'
-        ? '€'
-        : row.currency === 'GBP'
-          ? '£'
-          : row.currency
-            ? `${row.currency} `
-            : '$';
-  const k = (n: number) => `${sym}${Math.round(n / 1000)}k`;
-  if (row.salary_min != null && row.salary_max != null) {
-    return `${sym}${Math.round(row.salary_min / 1000)}–${Math.round(row.salary_max / 1000)}k`;
-  }
-  if (row.salary_min != null) return `${k(row.salary_min)}+`;
-  if (row.salary_max != null) return `up to ${k(row.salary_max)}`;
-  return null;
-}
 
 export default function MatchPage() {
   const { resume, hydrated } = useResume();

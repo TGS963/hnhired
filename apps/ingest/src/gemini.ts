@@ -1,6 +1,7 @@
 import { GoogleGenAI, Type } from '@google/genai';
 import { z } from 'zod';
 import { CANONICAL_COUNTRY_NAMES, COUNTRY_ALIAS_RULES } from '@hnhired/shared/countries';
+import { fetchUsdRates, toUsd, type ExchangeRates } from '@hnhired/shared/currencies';
 
 const apiKey = process.env.GOOGLE_API_KEY;
 if (!apiKey) throw new Error('GOOGLE_API_KEY required');
@@ -14,6 +15,22 @@ const EMBED_DIM = 1024;
 const SYSTEM = `Extract structured job fields from this HN 'Who is hiring?' comment. Return null for fields not stated. Do not infer. summary_1line is at most 280 chars.
 
 For locations: keep the stated place names AND also append the country for each one when it is unambiguous (e.g. "Bangalore" -> ["Bangalore", "India"]; "SF" -> ["SF", "USA"]; "Berlin" -> ["Berlin", "Germany"]). The appended country MUST be spelled exactly as one of these canonical names: ${CANONICAL_COUNTRY_NAMES.join(', ')}. Collapse aliases to the canonical name: ${COUNTRY_ALIAS_RULES} This country normalization is the only allowed inference; do not invent cities or countries that are not implied by a stated location. If only a country is given, return just the canonical country name.
+
+For salary and currency:
+- Detect the currency from explicit symbols ($, \u20ac, \u00a3, \u20b9, \u00a5, \u20a9, RM, S$, A$, CA$, etc.), currency codes (USD, EUR, GBP, INR, SGD, AUD, CAD, JPY, KRW, CHF, SEK, NOK, DKK, PLN, BRL, MXN, ZAR, PHP, MYR, IDR, THB, etc.), or country/region context (India/Bangalore -> INR, Germany/Berlin -> EUR, UK/London -> GBP, Japan/Tokyo -> JPY, Singapore -> SGD, Australia -> AUD, Canada -> CAD, Brazil -> BRL, Malaysia -> MYR, etc.).
+- Set "currency" to the ISO 4217 three-letter code (e.g. "USD", "INR", "EUR", "GBP"). If currency genuinely cannot be determined and the job location is not USA, set currency to null rather than defaulting to USD.
+- Set salary_min / salary_max to the ANNUALIZED value in that currency's base unit (dollars, euros, rupees, etc.):
+  - "6-10 LPA" or "6-10 lakhs" (India) -> salary_min=600000, salary_max=1000000, currency="INR"
+  - "$120k-$150k" -> salary_min=120000, salary_max=150000, currency="USD"
+  - "\u20ac70,000-\u20ac90,000" -> salary_min=70000, salary_max=90000, currency="EUR"
+  - "\u00a3500/day" -> salary_min=130000, salary_max=null, currency="GBP" (x260 working days)
+  - "\u00a58M-\u00a512M" (Japan) -> salary_min=8000000, salary_max=12000000, currency="JPY"
+  - "S$80k-S$100k" -> salary_min=80000, salary_max=100000, currency="SGD"
+  - "RM 8,000/month" -> salary_min=96000, salary_max=null, currency="MYR" (x12)
+  - "R$15,000/month" -> salary_min=180000, salary_max=null, currency="BRL" (x12)
+  - "40,000 PLN" -> salary_min=40000, salary_max=null, currency="PLN"
+- If salary is per-month, multiply by 12. If per-day, multiply by 260. If per-hour, multiply by 2080.
+- LPA (Lakhs Per Annum) means x100,000 in INR. CTC (Cost To Company) is annual total compensation.
 
 Also classify whether the comment is actually a job posting. Set is_job_posting=false for:
 - meta-comments about the thread itself ("great thread", "nice format")
