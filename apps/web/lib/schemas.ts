@@ -31,6 +31,8 @@ export const Post = z.object({
   salary_min: z.number().nullable(),
   salary_max: z.number().nullable(),
   currency: z.string().nullable(),
+  salary_min_usd: z.number().nullable().optional(),
+  salary_max_usd: z.number().nullable().optional(),
   equity: z.boolean().nullable(),
   seniority: z.array(z.string()).nullable(),
   tech_stack: z.array(z.string()).nullable(),

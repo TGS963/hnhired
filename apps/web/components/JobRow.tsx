@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { Bookmark, BookmarkCheck } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { seenClass } from '@/lib/ui';
+import { formatSalary } from '@/lib/salary';
+export { formatSalary } from '@/lib/salary';
 
 export type JobCardRow = {
   post_raw_id: string | number;
@@ -37,25 +39,6 @@ export function relativeTime(iso?: string | null): string {
   return `${Math.floor(mo / 12)}y`;
 }
 
-export function formatSalary(row: JobCardRow): string | null {
-  if (row.salary_min == null && row.salary_max == null) return null;
-  const sym =
-    row.currency === 'USD'
-      ? '$'
-      : row.currency === 'EUR'
-      ? '€'
-      : row.currency === 'GBP'
-      ? '£'
-      : row.currency
-      ? `${row.currency} `
-      : '$';
-  const k = (n: number) => `${sym}${Math.round(n / 1000)}k`;
-  if (row.salary_min != null && row.salary_max != null) {
-    return `${sym}${Math.round(row.salary_min / 1000)}–${Math.round(row.salary_max / 1000)}k`;
-  }
-  if (row.salary_min != null) return `${k(row.salary_min)}+`;
-  return `up to ${k(row.salary_max as number)}`;
-}
 
 function readIdSet(key: string): Set<string> {
   if (typeof window === 'undefined') return new Set();

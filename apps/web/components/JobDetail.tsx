@@ -3,6 +3,7 @@ import DraftPanel from './DraftPanel';
 import ModalCloseButton from './ModalCloseButton';
 import type { FullPost } from '@/lib/posts';
 import { SITE_URL } from '@/lib/site';
+import { formatSalaryFull } from '@/lib/salary';
 
 function formatDate(value: unknown): string | null {
   if (!value) return null;
@@ -12,15 +13,11 @@ function formatDate(value: unknown): string | null {
 }
 
 function formatSalary(p: FullPost): string | null {
-  const min = p.salary_min;
-  const max = p.salary_max;
-  const currency = p.salary_currency ?? 'USD';
-  if (min == null && max == null) return null;
-  const fmt = (n: number) =>
-    new Intl.NumberFormat(undefined, { style: 'currency', currency, maximumFractionDigits: 0 }).format(n);
-  if (min != null && max != null) return `${fmt(Number(min))} – ${fmt(Number(max))}`;
-  if (min != null) return `From ${fmt(Number(min))}`;
-  return `Up to ${fmt(Number(max))}`;
+  return formatSalaryFull({
+    salary_min: p.salary_min,
+    salary_max: p.salary_max,
+    currency: p.currency ?? null,
+  });
 }
 
 export default function JobDetail({
@@ -78,7 +75,7 @@ export default function JobDetail({
       p.salary_min != null || p.salary_max != null
         ? {
             '@type': 'MonetaryAmount',
-            currency: p.salary_currency ?? 'USD',
+            currency: p.currency ?? 'USD',
             value: {
               '@type': 'QuantitativeValue',
               minValue: p.salary_min ?? undefined,

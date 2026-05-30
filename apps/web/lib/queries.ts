@@ -41,7 +41,11 @@ export function filterClause(
     }
     case 'comp_min': {
       const n = Number(raw);
-      return Number.isFinite(n) ? `salary_min >= ${bind(n)}` : null;
+      // Compare against USD-normalized salary so cross-currency filtering is meaningful.
+      // Falls back to raw salary_min if salary_min_usd is null (e.g. unknown currency).
+      return Number.isFinite(n)
+        ? `(salary_min_usd >= ${bind(n)} OR (salary_min_usd IS NULL AND salary_min >= ${bind(n)}))`
+        : null;
     }
     case 'contract':
       return CONTRACT_TYPES.has(raw) ? `contract_type = ${bind(raw)}` : null;
